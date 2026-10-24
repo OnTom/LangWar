@@ -10,9 +10,12 @@ import arena from './screens/arena.js';
 import obchod from './screens/obchod.js';
 import slava from './screens/slava.js';
 import ukoly from './screens/ukoly.js';
+import cech from './screens/cech.js';
+import hospoda from './screens/hospoda.js';
+import { connectChat, disconnectChat, onChat } from './chat.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, arena, obchod, ukoly, slava };
+const screens = { profil, krcma, arena, obchod, ukoly, cech, hospoda, slava };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
@@ -55,19 +58,26 @@ async function loadCharacter() {
 
 function startGame() {
   menuEl.hidden = false;
+  connectChat();
   router();
+}
+
+function setBadge(id, count) {
+  const badge = document.getElementById(id);
+  badge.hidden = !count;
+  badge.textContent = count || '';
 }
 
 function updateMenu(c) {
   document.getElementById('player-name').textContent = c ? `${c.avatar} ${c.name}` : '';
   document.getElementById('player-gold').textContent = c ? c.gold : '';
-  // Odznak u denních úkolů: kolik odměn čeká na vyzvednutí
-  const badge = document.getElementById('daily-badge');
-  badge.hidden = !c || !c.dailyReady;
-  badge.textContent = c?.dailyReady || '';
+  // Odznaky: nevyzvednuté denní odměny a pozvánky do cechu
+  setBadge('daily-badge', c?.dailyReady);
+  setBadge('guild-badge', c && !c.guild ? c.guildInvites : 0);
 }
 
 function logout() {
+  disconnectChat();
   setCharacter(null);
   clearSession();
   location.hash = '';
@@ -113,6 +123,16 @@ async function init() {
 
 setUnauthorizedHandler(logout);
 onCharacterChange(updateMenu);
+onChat(async (event) => {
+  if (event.type === 'unread') setBadge('chat-badge', event.unread.global + event.unread.guild);
+  // Server hlásí změnu (pozvánka, vyhození z cechu…): načteme postavu znovu
+  if (event.type === 'refresh' && getUser()) {
+    try {
+      const { character } = await api('/character');
+      if (character) setCharacter(character);
+    } catch {}
+  }
+});
 document.getElementById('logout').addEventListener('click', logout);
 window.addEventListener('hashchange', router);
 init();

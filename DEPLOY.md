@@ -155,9 +155,19 @@ po pádu serveru, takže nic nemaž ručně.
 
 ---
 
+## Chat (WebSocket)
+
+Chat používá WebSocket na adrese `/ws` na stejném portu jako hra. Caddy i Railway ho přeposílají
+automaticky, nic dalšího se nastavovat nemusí. Když hra poběží za jinou proxy (např. nginx), musí
+mít zapnuté přeposílání WebSocketů (hlavičky `Upgrade` a `Connection`).
+
+Hra musí běžet jako **jedna instance** – chat posílá zprávy jen hráčům připojeným ke stejnému serveru
+(a SQLite to stejně vyžaduje).
+
 ## Když něco nejde
 
 - **Server nenastartuje a v logu je „V produkci musí být nastavená proměnná JWT_SECRET“** – chybí nebo je krátký tajný klíč.
 - **Po nasazení zmizeli hráči** – databáze není na trvalém disku (zkontroluj Volume `/data`).
 - **Caddy nezíská certifikát** – doména ještě neukazuje na server, nebo jsou zavřené porty 80/443.
+- **V Hospodě svítí „Připojuji se…“** – proxy nepřeposílá WebSockety (viz sekce Chat).
 - **Všem hráčům hlásí „Příliš mnoho pokusů“** – chybí `TRUST_PROXY=1`, server pak vidí všechny hráče jako jednu IP adresu proxy.

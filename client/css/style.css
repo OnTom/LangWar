@@ -700,6 +700,122 @@ h3 small { color: #7a5a2a; }
 .daily-state { color: #3f7a2a; font-weight: bold; white-space: nowrap; }
 .daily-message { font-weight: bold; color: #3f7a2a; }
 
+/* Cechy */
+.guild-head { display: flex; gap: 16px; align-items: center; }
+.guild-head h2 { margin: 0; }
+.guild-emblem {
+  font-size: 3.5rem;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fffaf0;
+  border: 4px solid #b89d6c;
+  border-radius: 50% 50% 45% 45%;
+  flex-shrink: 0;
+}
+.guild-motto { font-style: italic; margin: 4px 0; }
+.guild-stats { display: flex; flex-wrap: wrap; gap: 14px; font-weight: bold; }
+.guild-stats a, .profile a, .guild-pending a { color: var(--accent); }
+
+.guild-invites, .guild-pending { list-style: none; padding: 0; margin: 0; }
+.guild-invites li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.guild-emblem-small { font-size: 2rem; }
+.guild-invite-body { flex: 1; min-width: 160px; display: flex; flex-direction: column; }
+.guild-pending li { padding: 4px 0; }
+
+.guild-create label { display: block; margin-bottom: 10px; font-weight: bold; }
+.guild-create input,
+.guild-donate input,
+.guild-invite input,
+.guild-motto-form input,
+.chat-form input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px;
+  font: inherit;
+  border: 2px solid #b89d6c;
+  border-radius: 4px;
+  background: #fffaf0;
+}
+.guild-donate, .guild-invite, .guild-motto-form, .chat-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.guild-donate input, .guild-invite input, .guild-motto-form input, .chat-form input {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+  margin: 0;
+}
+.guild-donate small { flex-basis: 100%; color: #7a5a2a; }
+
+.emblem-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.emblem-choice { font-size: 1.6rem; width: 48px; height: 48px; }
+
+.guild-upgrades { display: flex; flex-direction: column; gap: 10px; }
+.guild-upgrade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.guild-members td { vertical-align: middle; }
+.member-actions { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.member-actions .btn-small { padding: 4px 8px; font-size: 0.8rem; }
+.guild-leave { margin-top: 24px; text-align: right; }
+.panel.guild, .panel.chat { max-width: 900px; }
+.ladder-guild { display: block; color: #7a5a2a; font-weight: normal; }
+
+.link-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Chat */
+.chat-tabs .badge { margin-left: 6px; }
+.chat-status { font-size: 0.85rem; color: #7a5a2a; margin-bottom: 6px; }
+.chat-messages {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 10px;
+  height: 380px;
+  overflow-y: auto;
+  background: #fffaf0;
+  border: 2px solid var(--panel-dark);
+  border-radius: 6px;
+}
+.chat-messages li { padding: 3px 0; overflow-wrap: anywhere; }
+.chat-time { font-size: 0.75rem; color: #8c7f65; margin-right: 4px; }
+.chat-guild { color: #7a5a2a; }
+.chat-mine { background: rgba(63, 122, 42, 0.08); }
+.chat-system { font-style: italic; color: #6b3a1a; }
+.chat-tabs button:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }
@@ -728,6 +844,11 @@ h3 small { color: #7a5a2a; }
   .equipment-grid { grid-template-columns: repeat(4, 52px); }
   .ladder-class { display: none; }
   .ladder-table th, .ladder-table td { padding: 6px 4px; }
+  .chat-messages { height: 55vh; }
+  .guild-emblem { width: 64px; height: 64px; font-size: 2.4rem; }
+  .guild-members .member-actions { justify-content: flex-start; }
+  .guild-upgrade .btn { flex-basis: 100%; }
+  .guild-upgrade .daily-body { min-width: 180px; }
   .fighter { padding: 8px 6px; }
   .fighter-avatar { font-size: 2.5rem; }
   .vs { font-size: 1.1rem; }

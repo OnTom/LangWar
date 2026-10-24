@@ -8,6 +8,7 @@ import { generateItem, itemView } from '../game/items.js';
 import { insertItem, inventoryFree } from '../game/inventory.js';
 import { generateOffers } from '../game/quests.js';
 import { progressDaily } from '../game/daily.js';
+import { guildBonus, applyBonus } from '../game/guild.js';
 import { createMonster } from '../game/monsters.js';
 import { fight } from '../game/combat.js';
 
@@ -44,9 +45,15 @@ function questItem(questId) {
   return db.prepare("SELECT * FROM items WHERE quest_id = ? AND location = 'quest'").get(questId);
 }
 
-function questView(q) {
+// Odměny výpravy včetně bonusu z vylepšení cechu
+function questRewards(q, bonus) {
+  return { xp: applyBonus(q.xp, bonus.xp), gold: applyBonus(q.gold, bonus.gold) };
+}
+
+function questView(q, bonus) {
   const item = questItem(q.id);
   return {
+    ...questRewards(q, bonus),
     item: item ? itemView(item) : null,
     slot: q.slot,
     title: q.title,
@@ -54,8 +61,6 @@ function questView(q) {
     monster: q.monster,
     monsterIcon: q.monster_icon,
     duration: q.duration,
-    xp: q.xp,
-    gold: q.gold,
     startedAt: q.started_at,
     endsAt: q.ends_at,
   };
@@ -69,11 +74,13 @@ function tavernState(c) {
     quests = db.prepare('SELECT * FROM quests WHERE character_id = ? ORDER BY slot').all(c.id);
   }
   const active = quests.find((q) => q.started_at !== null);
+  const bonus = guildBonus(c.id);
   return {
     thirst: c.thirst,
     thirstMax: THIRST_MAX,
-    active: active ? questView(active) : null,
-    offers: active ? [] : quests.map(questView),
+    guildBonus: bonus,
+    active: active ? questView(active, bonus) : null,
+    offers: active ? [] : quests.map((q) => questView(q, bonus)),
     serverNow: Date.now(),
   };
 }
@@ -160,10 +167,11 @@ router.post('/complete', (req, res) => {
   const won = battle.winner === 'a';
 
   // Odměna jen za vítězství. Předmět jde do inventáře; když není místo, rovnou se prodá.
-  const progress = won ? addXp(c.level, c.xp, quest.xp) : { level: c.level, xp: c.xp, levelsGained: 0 };
+  const rewards = questRewards(quest, guildBonus(c.id));
+  const progress = won ? addXp(c.level, c.xp, rewards.xp) : { level: c.level, xp: c.xp, levelsGained: 0 };
   const rewardItem = won ? questItem(quest.id) : null;
   const itemSold = rewardItem && inventoryFree(c.id) <= 0;
-  const goldGained = won ? quest.gold + (itemSold ? rewardItem.value : 0) : 0;
+  const goldGained = won ? rewards.gold + (itemSold ? rewardItem.value : 0) : 0;
 
   const complete = db.transaction(() => {
     if (rewardItem && !itemSold) {
@@ -195,7 +203,7 @@ router.post('/complete', (req, res) => {
     result: {
       title: quest.title,
       won,
-      xp: won ? quest.xp : 0,
+      xp: won ? rewards.xp : 0,
       gold: goldGained,
       item: rewardItem ? itemView(rewardItem) : null,
       itemSold: Boolean(itemSold),

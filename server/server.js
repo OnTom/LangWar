@@ -10,6 +10,9 @@ import inventoryRoutes from './routes/inventory.js';
 import shopRoutes from './routes/shop.js';
 import arenaRoutes from './routes/arena.js';
 import dailyRoutes from './routes/daily.js';
+import guildRoutes from './routes/guild.js';
+import chatRoutes from './routes/chat.js';
+import { attachChat } from './ws.js';
 import { giveStarterGearToAll } from './game/inventory.js';
 import db from './db.js';
 
@@ -42,6 +45,8 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/arena', arenaRoutes);
 app.use('/api/daily', dailyRoutes);
+app.use('/api/guild', guildRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Neznámé API cesty
 app.use('/api', (req, res) => {
@@ -68,10 +73,14 @@ const server = app.listen(PORT, () => {
   console.log(`LangWar běží na http://localhost:${PORT}`);
 });
 
+// Chat v reálném čase na stejném portu (cesta /ws)
+const chatServer = attachChat(server);
+
 // Korektní vypnutí (hosting posílá SIGTERM při restartu nebo nasazení nové verze):
 // dokončí rozjeté požadavky a zavře databázi, aby se nic neztratilo
 function shutdown(signal) {
   console.log(`${signal}: zavírám krčmu…`);
+  chatServer.close();
   server.close(() => {
     db.close();
     process.exit(0);

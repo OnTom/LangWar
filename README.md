@@ -75,6 +75,22 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/daily`         | Dnešní úkoly a stav truhly        |
 | POST   | `/api/daily/claim`   | Vyzvednout odměnu za úkol `{slot}` |
 | POST   | `/api/daily/chest`   | Otevřít truhlu za všechny úkoly   |
+| GET    | `/api/guild`         | Můj cech (nebo pozvánky a možnosti založení) |
+| GET    | `/api/guild/ladder`  | Žebříček cechů                    |
+| POST   | `/api/guild/create`  | Založit cech `{name, emblem, motto}` |
+| POST   | `/api/guild/invite`  | Pozvat hráče `{name}` (vůdce, důstojník) |
+| POST   | `/api/guild/invite/cancel` | Zrušit pozvánku `{inviteId}` |
+| POST   | `/api/guild/accept`, `/decline` | Přijmout / odmítnout pozvánku `{inviteId}` |
+| POST   | `/api/guild/leave`   | Opustit cech (poslední člen ho rozpustí) |
+| POST   | `/api/guild/kick`    | Vyhodit člena `{characterId}`     |
+| POST   | `/api/guild/role`    | Povýšit/degradovat `{characterId, role}` (vůdce) |
+| POST   | `/api/guild/transfer` | Předat vedení `{characterId}` (vůdce) |
+| POST   | `/api/guild/donate`  | Přispět do pokladnice `{amount}`  |
+| POST   | `/api/guild/upgrade` | Koupit vylepšení `{upgrade: 'xp' \| 'gold'}` |
+| POST   | `/api/guild/motto`   | Změnit motto `{motto}` (vůdce)    |
+| GET    | `/api/chat?channel=global\|guild` | Posledních 50 zpráv  |
+| POST   | `/api/chat`          | Poslat zprávu `{channel, text}`   |
+| WS     | `/ws`                | Zprávy chatu v reálném čase (viz `server/ws.js`) |
 
 Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují token v hlavičce `Authorization: Bearer <token>`.
 
@@ -121,6 +137,21 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - Každý den 3 náhodné úkoly (výpravy, aréna, obchod, vylepšování…), odměna zlato + XP
 - Po vyzvednutí všech tří jde otevřít truhla s předmětem (vyšší šance na vzácnost)
 - Druhy úkolů jsou v `server/data/daily.js`, počítadla se volají přes `progressDaily()`
+
+### Cechy
+
+- Založení za 100 zlaťáků, nejvýš 20 členů, noví členové jen na pozvánku
+- Role: vůdce (vše), důstojník (zve, vyhazuje řadové členy, kupuje vylepšení), člen
+- Pokladnice: členové přispívají zlatem, vedení kupuje vylepšení
+  (Síň učenců = víc XP, Zlatá komora = víc zlata z výprav; +2 % za úroveň, max. 10 úrovní)
+- Žebříček cechů podle součtu cti členů
+
+### Chat
+
+- Náves (všichni) a cechovní chat; zprávy se posílají přes REST (limity proti spamu:
+  5 zpráv za 10 s, max. 300 znaků) a doručují přes WebSocket na `/ws`
+- Cechovní kronika: systémové zprávy o dění v cechu
+- Ukládá se posledních 500 zpráv v každém kanálu
 
 ## Struktura
 

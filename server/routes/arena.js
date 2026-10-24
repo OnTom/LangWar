@@ -163,8 +163,12 @@ router.get('/ladder', (req, res) => {
     .prepare(
       `SELECT * FROM (
          SELECT c.id, c.avatar, c.class, c.level, c.honor, u.username AS name,
+                g.name AS guild_name, g.emblem AS guild_emblem,
                 ROW_NUMBER() OVER (ORDER BY ${RANK_ORDER}) AS rank
-         FROM characters c JOIN users u ON u.id = c.user_id
+         FROM characters c
+         JOIN users u ON u.id = c.user_id
+         LEFT JOIN guild_members gm ON gm.character_id = c.id
+         LEFT JOIN guilds g ON g.id = gm.guild_id
        ) WHERE rank <= ? OR id = ? ORDER BY rank`
     )
     .all(LADDER_SIZE, c.id);
@@ -178,6 +182,7 @@ router.get('/ladder', (req, res) => {
       className: CLASSES[r.class].name,
       level: r.level,
       honor: r.honor,
+      guild: r.guild_name ? { name: r.guild_name, emblem: r.guild_emblem } : null,
       isMe: r.id === c.id,
     })),
   });

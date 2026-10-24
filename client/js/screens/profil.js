@@ -64,6 +64,7 @@ export default function profil(el) {
           <div class="profile-info">
             <h2>${escapeHtml(c.name)}</h2>
             <div class="subtitle">${c.className} · úroveň ${c.level}</div>
+            ${c.guild ? `<div class="subtitle"><a href="#/cech">${c.guild.emblem} ${escapeHtml(c.guild.name)}</a> · ${c.guild.roleName}</div>` : ''}
             <div class="xp-bar" title="${c.xp} / ${c.xpToNextLevel} XP">
               <div class="xp-fill" style="width: ${xpPercent}%"></div>
               <span>${c.xp} / ${c.xpToNextLevel} XP</span>

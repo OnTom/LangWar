@@ -103,6 +103,50 @@ db.exec(`
     claimed      INTEGER NOT NULL DEFAULT 0,
     UNIQUE (character_id, day, slot)
   );
+
+  -- Cechy
+  CREATE TABLE IF NOT EXISTS guilds (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    emblem          TEXT    NOT NULL,
+    motto           TEXT    NOT NULL DEFAULT '',
+    treasury        INTEGER NOT NULL DEFAULT 0,
+    upgrade_xp      INTEGER NOT NULL DEFAULT 0,
+    upgrade_gold    INTEGER NOT NULL DEFAULT 0,
+    created_at      INTEGER NOT NULL
+  );
+
+  -- Každá postava je nejvýš v jednom cechu; role = leader | officer | member
+  CREATE TABLE IF NOT EXISTS guild_members (
+    character_id INTEGER PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
+    guild_id     INTEGER NOT NULL REFERENCES guilds(id) ON DELETE CASCADE,
+    role         TEXT    NOT NULL,
+    joined_at    INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS guild_members_guild ON guild_members(guild_id);
+
+  CREATE TABLE IF NOT EXISTS guild_invites (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id     INTEGER NOT NULL REFERENCES guilds(id) ON DELETE CASCADE,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    invited_by   INTEGER REFERENCES characters(id) ON DELETE SET NULL,
+    created_at   INTEGER NOT NULL,
+    UNIQUE (guild_id, character_id)
+  );
+
+  -- Chat: channel = global | guild:<id>; system = zpráva od hry (bez autora)
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel      TEXT    NOT NULL,
+    character_id INTEGER REFERENCES characters(id) ON DELETE SET NULL,
+    name         TEXT    NOT NULL,
+    avatar       TEXT    NOT NULL,
+    guild_name   TEXT,
+    text         TEXT    NOT NULL,
+    system       INTEGER NOT NULL DEFAULT 0,
+    created_at   INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS chat_channel ON chat_messages(channel, id);
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí

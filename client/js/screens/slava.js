@@ -16,7 +16,10 @@ export default function slava(el) {
           return `${gap}
             <tr class="${p.isMe ? 'me' : ''}">
               <td class="rank">${p.rank <= 3 ? ['🥇', '🥈', '🥉'][p.rank - 1] : `${p.rank}.`}</td>
-              <td>${p.avatar} <strong>${escapeHtml(p.name)}</strong></td>
+              <td>
+                ${p.avatar} <strong>${escapeHtml(p.name)}</strong>
+                ${p.guild ? `<small class="ladder-guild">${p.guild.emblem} ${escapeHtml(p.guild.name)}</small>` : ''}
+              </td>
               <td class="ladder-class">${p.className}</td>
               <td class="num">${p.level}</td>
               <td class="num">${p.honor}</td>
@@ -34,7 +37,7 @@ export default function slava(el) {
             </thead>
             <tbody>${rows}</tbody>
           </table>
-          <p><a href="#/arena">⚔️ Zpátky do arény</a></p>
+          <p><a href="#/arena">⚔️ Zpátky do arény</a> · <a href="#/cech">🏰 Žebříček cechů najdeš u cechů</a></p>
         </div>`;
     })
     .catch((err) => {

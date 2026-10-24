@@ -187,3 +187,27 @@ export function dailyReward(level) {
 
 // Truhla za splnění všech denních úkolů: předmět s vyšší šancí na vzácnost
 export const DAILY_CHEST_RARITY_BOOST = 25;
+
+// --- Cechy ------------------------------------------------------------------
+
+export const GUILD_CREATE_COST = 100;
+export const GUILD_MAX_MEMBERS = 20;
+export const GUILD_EMBLEMS = ['🐉', '🦁', '🐺', '🦅', '🐻', '🦄', '🍺', '⚔️', '🛡️', '🔥', '💀', '🌙', '🍄', '🐸'];
+
+// Vylepšení cechu: každá úroveň přidá všem členům bonus k odměnám z výprav
+export const GUILD_UPGRADES = {
+  xp: { name: 'Síň učenců', icon: '📚', description: 'Víc zkušeností z výprav' },
+  gold: { name: 'Zlatá komora', icon: '💰', description: 'Víc zlata z výprav' },
+};
+export const GUILD_UPGRADE_MAX = 10;
+export const GUILD_BONUS_PER_LEVEL = 2; // %
+
+export function guildUpgradeCost(currentLevel) {
+  return 200 * (currentLevel + 1) ** 2;
+}
+
+// --- Chat -------------------------------------------------------------------
+
+export const CHAT_MAX_LENGTH = 300;
+export const CHAT_HISTORY = 50; // kolik posledních zpráv klient dostane
+export const CHAT_KEEP = 500; // kolik zpráv v kanálu uchovávat
