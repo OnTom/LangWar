@@ -1,5 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import Database from 'better-sqlite3';
 import { DB_FILE } from './config.js';
+
+// Na serveru bývá databáze na samostatném disku (např. /data) – složku případně vytvoříme
+fs.mkdirSync(path.dirname(path.resolve(DB_FILE)), { recursive: true });
 
 const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');

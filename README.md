@@ -11,6 +11,11 @@ npm start        # nebo: npm run dev (automatický restart při změně)
 
 Pak otevři http://localhost:3000
 
+**Nasazení na internet:** viz [DEPLOY.md](DEPLOY.md) (Railway nebo vlastní server s Dockerem a automatickým HTTPS).
+
+Záloha databáze: `npm run backup` (do složky `backups/`, drží se posledních 14),
+obnova: `npm run restore -- backups/soubor.db` (při vypnutém serveru).
+
 ## Nastavení (proměnné prostředí)
 
 | Proměnná     | Výchozí hodnota  | Popis                                                  |

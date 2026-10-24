@@ -1,0 +1,31 @@
+# Nasazení na vlastní server (VPS): hra + Caddy s automatickým HTTPS.
+# Před spuštěním vytvoř soubor .env (viz DEPLOY.md) a nasměruj doménu na IP serveru.
+services:
+  game:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TRUST_PROXY: 1 # hra běží za Caddy
+    volumes:
+      - game-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN} # z .env; Caddy nepotřebuje znát tajný klíč hry
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - game
+
+volumes:
+  game-data:
+  caddy-data:
+  caddy-config:

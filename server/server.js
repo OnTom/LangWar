@@ -11,6 +11,7 @@ import shopRoutes from './routes/shop.js';
 import arenaRoutes from './routes/arena.js';
 import dailyRoutes from './routes/daily.js';
 import { giveStarterGearToAll } from './game/inventory.js';
+import db from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -24,9 +25,14 @@ app.use('/api', apiLimiter);
 // Statické soubory klienta (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
-// Testovací endpoint – ověří, že server žije
+// Kontrola stavu pro hosting: server žije a databáze odpovídá
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, message: 'Krčma je otevřená!', time: Date.now() });
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true, message: 'Krčma je otevřená!', time: Date.now() });
+  } catch {
+    res.status(503).json({ ok: false, error: 'Databáze neodpovídá.' });
+  }
 });
 
 app.use('/api/auth', authRoutes);
@@ -58,6 +64,21 @@ app.use((err, req, res, next) => {
 // Postavy založené před zavedením předmětů dostanou startovní výbavu
 giveStarterGearToAll();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`LangWar běží na http://localhost:${PORT}`);
 });
+
+// Korektní vypnutí (hosting posílá SIGTERM při restartu nebo nasazení nové verze):
+// dokončí rozjeté požadavky a zavře databázi, aby se nic neztratilo
+function shutdown(signal) {
+  console.log(`${signal}: zavírám krčmu…`);
+  server.close(() => {
+    db.close();
+    process.exit(0);
+  });
+  // Kdyby některé spojení viselo, po 10 s to utneme
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

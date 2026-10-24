@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "node --watch server/server.js"
+    "dev": "node --watch server/server.js",
+    "backup": "node server/backup.js",
+    "restore": "node server/restore.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -15,5 +17,8 @@
     "express-rate-limit": "^8.7.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
