@@ -13,6 +13,23 @@ db.exec(`
     password_hash TEXT    NOT NULL,
     created_at    INTEGER NOT NULL
   );
+
+  -- Každý hráč má jednu postavu
+  CREATE TABLE IF NOT EXISTS characters (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    class        TEXT    NOT NULL,
+    avatar       TEXT    NOT NULL,
+    level        INTEGER NOT NULL DEFAULT 1,
+    xp           INTEGER NOT NULL DEFAULT 0,
+    gold         INTEGER NOT NULL DEFAULT 0,
+    strength     INTEGER NOT NULL,
+    dexterity    INTEGER NOT NULL,
+    intelligence INTEGER NOT NULL,
+    constitution INTEGER NOT NULL,
+    luck         INTEGER NOT NULL,
+    created_at   INTEGER NOT NULL
+  );
 `);
 
 export default db;

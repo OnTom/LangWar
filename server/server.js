@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PORT } from './config.js';
 import authRoutes from './routes/auth.js';
+import characterRoutes from './routes/character.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,6 +19,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/character', characterRoutes);
 
 // Neznámé API cesty
 app.use('/api', (req, res) => {

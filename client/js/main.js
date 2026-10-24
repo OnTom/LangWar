@@ -1,6 +1,8 @@
 import { api, setUnauthorizedHandler } from './api.js';
 import { getToken, getUser, setUser, clearSession } from './session.js';
+import { getCharacter, setCharacter, onCharacterChange } from './state.js';
 import login from './screens/login.js';
+import vytvoreni from './screens/vytvoreni.js';
 import profil from './screens/profil.js';
 import krcma from './screens/krcma.js';
 import arena from './screens/arena.js';
@@ -16,23 +18,46 @@ const menuEl = document.getElementById('menu');
 function showLogin() {
   menuEl.hidden = true;
   screenEl.innerHTML = '';
-  login(screenEl, { onLogin: startGame });
+  login(screenEl, { onLogin: loadCharacter });
+}
+
+// Po přihlášení: má hráč postavu? Pokud ne, nejdřív ji vytvoří.
+async function loadCharacter() {
+  menuEl.hidden = true;
+  try {
+    const { character } = await api('/character');
+    if (!character) {
+      screenEl.innerHTML = '';
+      return await vytvoreni(screenEl, { onCreated: startGame });
+    }
+    setCharacter(character);
+    startGame();
+  } catch (err) {
+    if (getUser()) {
+      screenEl.innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
+    }
+  }
 }
 
 function startGame() {
   menuEl.hidden = false;
-  document.getElementById('player-name').textContent = getUser().username;
   router();
 }
 
+function updateMenu(c) {
+  document.getElementById('player-name').textContent = c ? `${c.avatar} ${c.name}` : '';
+  document.getElementById('player-gold').textContent = c ? c.gold : '';
+}
+
 function logout() {
+  setCharacter(null);
   clearSession();
   location.hash = '';
   showLogin();
 }
 
 function router() {
-  if (!getUser()) return;
+  if (!getUser() || !getCharacter()) return;
 
   const name = location.hash.replace('#/', '') || DEFAULT_SCREEN;
   const render = screens[name] || screens[DEFAULT_SCREEN];
@@ -61,7 +86,7 @@ async function init() {
   try {
     const { user } = await api('/auth/me');
     setUser(user);
-    startGame();
+    loadCharacter();
   } catch {
     // Neplatný token smaže handler pro 401; při výpadku serveru token necháme
     showLogin();
@@ -69,6 +94,7 @@ async function init() {
 }
 
 setUnauthorizedHandler(logout);
+onCharacterChange(updateMenu);
 document.getElementById('logout').addEventListener('click', logout);
 window.addEventListener('hashchange', router);
 init();
