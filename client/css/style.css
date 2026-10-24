@@ -10,6 +10,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -50,8 +52,31 @@ body {
 #menu a:hover { background: var(--menu-hover); }
 #menu a.active { background: var(--accent); }
 
+.player {
+  color: #c9b48a;
+  padding: 0 20px 16px;
+  font-size: 0.9rem;
+}
+
+.player strong { color: #f5c84c; }
+
+.menu-bottom { margin-top: auto; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #f1e3c4;
+  font: inherit;
+  font-size: 1rem;
+  padding: 12px 20px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.link-btn:hover { background: var(--menu-hover); }
+
 .status {
-  margin-top: auto;
   padding: 12px 20px;
   font-size: 0.8rem;
   color: #c9b48a;
@@ -77,6 +102,82 @@ body {
   color: var(--accent);
 }
 
+/* Přihlášení a registrace */
+.auth-panel {
+  max-width: 400px;
+  margin: 40px auto;
+}
+
+.intro { font-style: italic; margin-top: -8px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  font: inherit;
+  background: var(--panel-dark);
+  color: var(--ink);
+  border: 2px solid #b89d6c;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.auth-form input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  font: inherit;
+  border: 2px solid #b89d6c;
+  border-radius: 4px;
+  background: #fffaf0;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.error {
+  color: var(--accent);
+  font-weight: bold;
+  min-height: 1.2em;
+  margin: 8px 0;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  background: var(--accent);
+  border: 2px solid #7a2214;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn:hover { background: #c23c25; }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }
@@ -90,6 +191,10 @@ body {
   }
   .logo { width: 100%; margin-bottom: 8px; }
   #menu a { padding: 8px 12px; }
-  .status { width: 100%; margin-top: 4px; padding: 4px 12px; }
+  .player { width: 100%; padding: 0 12px 8px; }
+  .menu-bottom { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .link-btn { width: auto; padding: 8px 12px; }
+  .status { padding: 4px 12px; }
+  .auth-panel { margin: 16px auto; }
   #screen { padding: 16px; }
 }
