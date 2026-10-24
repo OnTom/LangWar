@@ -1,0 +1,95 @@
+:root {
+  --bg: #2b1d12;
+  --panel: #f1e3c4;
+  --panel-dark: #d9c39a;
+  --ink: #3a2614;
+  --accent: #a8321e;
+  --menu: #4a3020;
+  --menu-hover: #6b4630;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+#app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Menu vlevo */
+#menu {
+  width: 200px;
+  background: var(--menu);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 4px solid #1c120a;
+}
+
+.logo {
+  color: #f5c84c;
+  text-align: center;
+  font-size: 1.6rem;
+  margin: 0 0 20px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+#menu a {
+  color: #f1e3c4;
+  text-decoration: none;
+  padding: 12px 20px;
+  font-size: 1.1rem;
+}
+
+#menu a:hover { background: var(--menu-hover); }
+#menu a.active { background: var(--accent); }
+
+.status {
+  margin-top: auto;
+  padding: 12px 20px;
+  font-size: 0.8rem;
+  color: #c9b48a;
+}
+
+/* Obsah obrazovky */
+#screen {
+  flex: 1;
+  padding: 24px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 800px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.panel h2 {
+  margin-top: 0;
+  color: var(--accent);
+}
+
+/* Mobil: menu nahoře */
+@media (max-width: 640px) {
+  #app { flex-direction: column; }
+  #menu {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 4px solid #1c120a;
+    padding: 8px;
+  }
+  .logo { width: 100%; margin-bottom: 8px; }
+  #menu a { padding: 8px 12px; }
+  .status { width: 100%; margin-top: 4px; padding: 4px 12px; }
+  #screen { padding: 16px; }
+}

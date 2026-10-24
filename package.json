@@ -1,0 +1,14 @@
+{
+  "name": "langwar",
+  "version": "0.1.0",
+  "description": "Webové fantasy RPG ve stylu Shakes and Fidget",
+  "main": "server/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
