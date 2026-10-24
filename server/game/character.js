@@ -16,6 +16,7 @@ import {
 import { SLOT_KEYS } from '../data/items.js';
 import { itemView, combatProfile, INVENTORY_SIZE } from './items.js';
 import { getItems } from './inventory.js';
+import { dailyReadyCount } from './daily.js';
 
 const SELECT_CHARACTER = `SELECT c.*, u.username AS name FROM characters c JOIN users u ON u.id = c.user_id`;
 
@@ -99,6 +100,7 @@ export function toView(c) {
     xpToNextLevel: xpToNextLevel(c.level),
     gold: c.gold,
     honor: c.honor,
+    dailyReady: dailyReadyCount(c),
     attributes,
     stats: {
       hp: maxHp(profile),

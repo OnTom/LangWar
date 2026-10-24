@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { findCharacter, toView, today } from '../game/character.js';
 import { generateItem, itemView, slotsForClass, BUY_PRICE_MULTIPLIER } from '../game/items.js';
 import { insertItem, getItems, getItem, inventoryFree } from '../game/inventory.js';
+import { progressDaily } from '../game/daily.js';
 
 const SHOP_SIZE = 6;
 
@@ -112,6 +113,7 @@ router.post('/buy', (req, res) => {
     if (err.message !== 'conflict') throw err;
     return res.status(409).json({ error: 'Něco se mezitím změnilo. Zkus to znovu.' });
   }
+  progressDaily(c.id, 'shop_buy');
   respond(req, res);
 });
 

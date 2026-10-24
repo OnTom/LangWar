@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { ATTRIBUTES, ATTRIBUTE_KEYS, CLASSES, AVATARS, STARTING_GOLD, upgradeCost } from '../game/rules.js';
 import { findCharacter, toView } from '../game/character.js';
 import { giveStarterGear } from '../game/inventory.js';
+import { progressDaily } from '../game/daily.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -78,6 +79,7 @@ router.post('/upgrade', (req, res) => {
     return res.status(409).json({ error: 'Něco se mezitím změnilo. Zkus to znovu.' });
   }
 
+  progressDaily(c.id, 'upgrade');
   res.json({ character: toView(findCharacter(req.user.id)) });
 });
 

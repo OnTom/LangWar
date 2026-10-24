@@ -79,6 +79,7 @@ export default function arena(el) {
           <a href="#/slava">🏆 Síň slávy</a>
         </div>
         ${statusHtml()}
+        <p class="hint">✨ Bonus: ještě ${state.xpWinsLeft} z 5 dnešních výher dá navíc ${state.xpPerWin} XP.</p>
         <p class="error" role="alert">${escapeHtml(errorText)}</p>
 
         <div class="opponent-list">
@@ -125,8 +126,10 @@ export default function arena(el) {
         <p>Porazil jsi soupeře <em>${escapeHtml(fight.enemy.name)}</em>. Dav šílí.</p>
         <div class="rewards">
           <span>💰 +${result.gold} zlaťáků</span>
+          ${result.xp ? `<span>✨ +${result.xp} XP</span>` : ''}
           ${honor}
         </div>
+        ${result.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň!</p>' : ''}
         <button type="button" class="btn continue-btn">Zpátky do arény</button>
       </div>`;
   }

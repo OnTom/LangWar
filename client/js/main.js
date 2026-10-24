@@ -9,9 +9,10 @@ import krcma from './screens/krcma.js';
 import arena from './screens/arena.js';
 import obchod from './screens/obchod.js';
 import slava from './screens/slava.js';
+import ukoly from './screens/ukoly.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, arena, obchod, slava };
+const screens = { profil, krcma, arena, obchod, ukoly, slava };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
@@ -60,6 +61,10 @@ function startGame() {
 function updateMenu(c) {
   document.getElementById('player-name').textContent = c ? `${c.avatar} ${c.name}` : '';
   document.getElementById('player-gold').textContent = c ? c.gold : '';
+  // Odznak u denních úkolů: kolik odměn čeká na vyzvednutí
+  const badge = document.getElementById('daily-badge');
+  badge.hidden = !c || !c.dailyReady;
+  badge.textContent = c?.dailyReady || '';
 }
 
 function logout() {

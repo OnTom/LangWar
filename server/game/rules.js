@@ -169,3 +169,21 @@ export function honorTransfer(winnerHonor, loserHonor) {
 export function arenaGold(level) {
   return goldPerMinute(level) * 3;
 }
+
+// Prvních pár výher v aréně každý den dá navíc XP
+export const ARENA_DAILY_XP_WINS = 5;
+
+export function arenaXp(level) {
+  return Math.max(1, Math.round(xpToNextLevel(level) / 15));
+}
+
+// --- Denní úkoly ------------------------------------------------------------
+
+export const DAILY_TASK_COUNT = 3;
+
+export function dailyReward(level) {
+  return { gold: goldPerMinute(level) * 5, xp: Math.max(1, Math.round(xpToNextLevel(level) / 10)) };
+}
+
+// Truhla za splnění všech denních úkolů: předmět s vyšší šancí na vzácnost
+export const DAILY_CHEST_RARITY_BOOST = 25;

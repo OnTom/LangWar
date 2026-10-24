@@ -85,6 +85,19 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS arena_attacker ON arena_fights(attacker_id, created_at);
   CREATE INDEX IF NOT EXISTS arena_defender ON arena_fights(defender_id, created_at);
+
+  -- Denní úkoly: každý den 3 náhodné
+  CREATE TABLE IF NOT EXISTS daily_tasks (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    day          TEXT    NOT NULL,
+    slot         INTEGER NOT NULL,
+    task_key     TEXT    NOT NULL,
+    target       INTEGER NOT NULL,
+    progress     INTEGER NOT NULL DEFAULT 0,
+    claimed      INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (character_id, day, slot)
+  );
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
@@ -102,6 +115,9 @@ addColumn('characters', 'starter_given', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'honor', 'INTEGER NOT NULL DEFAULT 100');
 addColumn('characters', 'arena_ready_at', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'arena_opponents', "TEXT NOT NULL DEFAULT ''");
+addColumn('characters', 'daily_chest_day', "TEXT NOT NULL DEFAULT ''");
+addColumn('characters', 'arena_xp_day', "TEXT NOT NULL DEFAULT ''");
+addColumn('characters', 'arena_xp_wins', 'INTEGER NOT NULL DEFAULT 0');
 db.exec('CREATE INDEX IF NOT EXISTS characters_honor ON characters(honor)');
 
 export default db;

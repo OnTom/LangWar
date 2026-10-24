@@ -67,6 +67,9 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/arena`         | Aréna: čest, pořadí, soupeři, čekací doba, historie |
 | POST   | `/api/arena/fight`   | Vyzvat soupeře `{index}`          |
 | GET    | `/api/arena/ladder`  | Síň slávy (prvních 50 + vlastní pořadí) |
+| GET    | `/api/daily`         | Dnešní úkoly a stav truhly        |
+| POST   | `/api/daily/claim`   | Vyzvednout odměnu za úkol `{slot}` |
+| POST   | `/api/daily/chest`   | Otevřít truhlu za všechny úkoly   |
 
 Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují token v hlavičce `Authorization: Bearer <token>`.
 
@@ -105,7 +108,14 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - Vítěz vezme poraženému čest (víc za výhru nad silnějším) a útočník dostane zlato;
   NPC gladiátor dá polovinu zlata a žádnou čest
 - Mezi souboji je 10 minut pauza a během výpravy do arény nejde
+- Prvních 5 výher v aréně každý den dá navíc XP
 - Síň slávy řadí hráče podle cti
+
+### Denní úkoly
+
+- Každý den 3 náhodné úkoly (výpravy, aréna, obchod, vylepšování…), odměna zlato + XP
+- Po vyzvednutí všech tří jde otevřít truhla s předmětem (vyšší šance na vzácnost)
+- Druhy úkolů jsou v `server/data/daily.js`, počítadla se volají přes `progressDaily()`
 
 ## Struktura
 

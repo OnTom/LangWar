@@ -7,6 +7,7 @@ import { findCharacter, refreshThirst, addXp, toView, characterCombatProfile } f
 import { generateItem, itemView } from '../game/items.js';
 import { insertItem, inventoryFree } from '../game/inventory.js';
 import { generateOffers } from '../game/quests.js';
+import { progressDaily } from '../game/daily.js';
 import { createMonster } from '../game/monsters.js';
 import { fight } from '../game/combat.js';
 
@@ -185,6 +186,9 @@ router.post('/complete', (req, res) => {
     if (err.message !== 'conflict') throw err;
     return res.status(409).json({ error: 'Odměnu už sis vyzvedl.' });
   }
+
+  progressDaily(c.id, 'thirst', Math.round(quest.duration / 60));
+  if (won) progressDaily(c.id, 'quest_win');
 
   const updated = refreshThirst(findCharacter(req.user.id));
   res.json({

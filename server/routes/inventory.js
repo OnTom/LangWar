@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { findCharacter, toView } from '../game/character.js';
 import { canEquip } from '../game/items.js';
 import { getItem, inventoryFree } from '../game/inventory.js';
+import { progressDaily } from '../game/daily.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -64,6 +65,7 @@ router.post('/sell', (req, res) => {
     db.prepare('DELETE FROM items WHERE id = ?').run(item.id);
     db.prepare('UPDATE characters SET gold = gold + ? WHERE id = ?').run(item.value, c.id);
   })();
+  progressDaily(c.id, 'item_sell');
   respond(req, res);
 });
 

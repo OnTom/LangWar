@@ -10,4 +10,10 @@ export default [
   { name: 'Lovkyně Šipka', avatar: '🏹', class: 'scout' },
   { name: 'Zloděj ponožek', avatar: '🧦', class: 'scout' },
   { name: 'Ninja z vedlejší vesnice', avatar: '🥷', class: 'scout' },
+  { name: 'Hospodský po zavíračce', avatar: '🍺', class: 'warrior' },
+  { name: 'Mnich, co slíbil mír', avatar: '🧘', class: 'warrior' },
+  { name: 'Alchymista s výbušninami', avatar: '⚗️', class: 'mage' },
+  { name: 'Šašek Kejklíř', avatar: '🃏', class: 'mage' },
+  { name: 'Pytlák Lesoň', avatar: '🪤', class: 'scout' },
+  { name: 'Pirátka Jednooká Bára', avatar: '🏴‍☠️', class: 'scout' },
 ];
