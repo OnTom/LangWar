@@ -15,9 +15,18 @@ const DEFAULT_SCREEN = 'profil';
 const screenEl = document.getElementById('screen');
 const menuEl = document.getElementById('menu');
 
+// Obrazovka může vrátit funkci pro úklid (např. zastavení časovače)
+let cleanupScreen = null;
+
+function clearScreen() {
+  if (cleanupScreen) cleanupScreen();
+  cleanupScreen = null;
+  screenEl.innerHTML = '';
+}
+
 function showLogin() {
   menuEl.hidden = true;
-  screenEl.innerHTML = '';
+  clearScreen();
   login(screenEl, { onLogin: loadCharacter });
 }
 
@@ -27,13 +36,14 @@ async function loadCharacter() {
   try {
     const { character } = await api('/character');
     if (!character) {
-      screenEl.innerHTML = '';
+      clearScreen();
       return await vytvoreni(screenEl, { onCreated: startGame });
     }
     setCharacter(character);
     startGame();
   } catch (err) {
     if (getUser()) {
+      clearScreen();
       screenEl.innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
     }
   }
@@ -66,8 +76,9 @@ function router() {
     a.classList.toggle('active', a.dataset.screen === name);
   });
 
-  screenEl.innerHTML = '';
-  render(screenEl);
+  clearScreen();
+  const cleanup = render(screenEl);
+  if (typeof cleanup === 'function') cleanupScreen = cleanup;
 }
 
 async function checkServer() {

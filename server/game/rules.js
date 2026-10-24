@@ -71,3 +71,30 @@ export function damageRange(c) {
 export function critChance(c) {
   return Math.min(50, Math.round(((c.luck * 5) / (c.level * 2)) * 10) / 10);
 }
+
+// --- Questy -----------------------------------------------------------------
+
+// Denní zásoba žízně v sekundách (100 minut). Quest stojí tolik žízně, jak dlouho trvá.
+export const THIRST_MAX = 100 * 60;
+export const QUEST_OFFERS = 3;
+
+// Délka questu v minutách: na začátku krátké, s úrovní se prodlužují
+export function questDurationRange(level) {
+  return { min: 1, max: Math.min(10, 3 + Math.floor(level / 2)) };
+}
+
+// Odměny za minutu questu; zhruba 12 minut questů na jednu úroveň
+export function xpPerMinute(level) {
+  return xpToNextLevel(level) / 12;
+}
+
+export function goldPerMinute(level) {
+  return 3 + level * 2;
+}
+
+// Typy nabídek: jedna spíš na XP, jedna na zlato, jedna vyvážená
+export const QUEST_TYPES = [
+  { xp: 1.5, gold: 0.6 },
+  { xp: 0.6, gold: 1.5 },
+  { xp: 1, gold: 1 },
+];

@@ -1,61 +1,11 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import {
-  ATTRIBUTES,
-  ATTRIBUTE_KEYS,
-  CLASSES,
-  AVATARS,
-  STARTING_GOLD,
-  xpToNextLevel,
-  upgradeCost,
-  maxHp,
-  damageRange,
-  critChance,
-} from '../game/rules.js';
+import { ATTRIBUTES, ATTRIBUTE_KEYS, CLASSES, AVATARS, STARTING_GOLD, upgradeCost } from '../game/rules.js';
+import { findCharacter, toView } from '../game/character.js';
 
 const router = Router();
 router.use(requireAuth);
-
-function findCharacter(userId) {
-  return db
-    .prepare(
-      `SELECT c.*, u.username AS name
-       FROM characters c JOIN users u ON u.id = c.user_id
-       WHERE c.user_id = ?`
-    )
-    .get(userId);
-}
-
-// Co klient dostane: uložené hodnoty + vše dopočítané serverem
-function toView(c) {
-  const attributes = {};
-  for (const key of ATTRIBUTE_KEYS) {
-    attributes[key] = {
-      name: ATTRIBUTES[key].name,
-      value: c[key],
-      upgradeCost: upgradeCost(c.class, key, c[key]),
-    };
-  }
-  const cls = CLASSES[c.class];
-  return {
-    name: c.name,
-    class: c.class,
-    className: cls.name,
-    mainAttribute: cls.mainAttribute,
-    avatar: c.avatar,
-    level: c.level,
-    xp: c.xp,
-    xpToNextLevel: xpToNextLevel(c.level),
-    gold: c.gold,
-    attributes,
-    stats: {
-      hp: maxHp(c),
-      damage: damageRange(c),
-      critChance: critChance(c),
-    },
-  };
-}
 
 // GET /api/character/options – třídy, avatary a atributy pro vytvoření postavy
 router.get('/options', (req, res) => {

@@ -316,6 +316,100 @@ h3 {
 
 .gold { margin-top: 8px; font-weight: bold; }
 
+/* Ukazatele (žízeň, průběh výpravy) */
+.bar {
+  position: relative;
+  height: 24px;
+  background: #d4c19c;
+  border: 2px solid #8c6d3f;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.25s linear;
+}
+
+.bar > span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  line-height: 20px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.thirst {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  font-weight: bold;
+}
+
+.thirst-bar { flex: 1; max-width: 320px; }
+.thirst-bar .bar-fill { background: #d9962b; }
+
+.quest-bar { margin: 16px 0; height: 32px; border-radius: 16px; }
+.quest-bar .bar-fill { background: #3f7a2a; }
+.quest-bar > span { line-height: 28px; font-size: 1.1rem; }
+
+/* Krčma */
+.quest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.quest-card {
+  display: flex;
+  flex-direction: column;
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.quest-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+.quest-card p {
+  flex: 1;
+  font-size: 0.92rem;
+  font-style: italic;
+  margin: 0 0 12px;
+}
+
+.quest-meta,
+.rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.rewards { font-size: 1.15rem; }
+
+.monster { color: #6b3a1a; }
+
+.btn-secondary {
+  background: #8c7f65;
+  border-color: #6b604b;
+}
+
+.btn-secondary:hover { background: #a3947a; }
+
+.quest-result { text-align: center; }
+.quest-result .rewards { justify-content: center; font-size: 1.4rem; }
+.level-up { font-size: 1.2rem; font-weight: bold; color: #6a4bc4; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }

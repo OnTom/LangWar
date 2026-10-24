@@ -30,6 +30,31 @@ db.exec(`
     luck         INTEGER NOT NULL,
     created_at   INTEGER NOT NULL
   );
+
+  -- Nabídky questů v krčmě (started_at = NULL) a právě běžící quest
+  CREATE TABLE IF NOT EXISTS quests (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    slot         INTEGER NOT NULL,
+    title        TEXT    NOT NULL,
+    description  TEXT    NOT NULL,
+    monster      TEXT    NOT NULL,
+    duration     INTEGER NOT NULL, -- v sekundách, tolik stojí žízně
+    xp           INTEGER NOT NULL,
+    gold         INTEGER NOT NULL,
+    started_at   INTEGER,
+    ends_at      INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS quests_character ON quests(character_id);
 `);
+
+// Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
+function addColumn(table, column, definition) {
+  const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
+  if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
+addColumn('characters', 'thirst', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'thirst_day', "TEXT NOT NULL DEFAULT ''");
 
 export default db;
