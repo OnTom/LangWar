@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { getCharacter, setCharacter } from '../state.js';
 import { itemSlotHtml, itemDetailHtml } from '../items.js';
+import { escapeHtml } from '../format.js';
 
 // Obchod: zbrojíř a kouzelnice, nákup i prodej
 export default function obchod(el) {
@@ -38,7 +39,7 @@ export default function obchod(el) {
 
   function render() {
     if (!data) {
-      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${errorText}</p>` : 'Obchodníci otevírají krámky…'}</div>`;
+      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${escapeHtml(errorText)}</p>` : 'Obchodníci otevírají krámky…'}</div>`;
       return;
     }
     const c = getCharacter();
@@ -74,7 +75,7 @@ export default function obchod(el) {
             <p class="hint">💰 ${c.gold} zlaťáků · nové zboží zdarma každý den o půlnoci</p>
           </div>
           <div>
-            <p class="error" role="alert">${errorText}</p>
+            <p class="error" role="alert">${escapeHtml(errorText)}</p>
             <div class="item-detail-box">${detailHtml(c)}</div>
           </div>
         </div>

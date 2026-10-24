@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { getCharacter, setCharacter } from '../state.js';
 import { SLOT_ORDER, SLOT_NAMES, itemSlotHtml, itemDetailHtml } from '../items.js';
+import { escapeHtml } from '../format.js';
 
 // Proč postava předmět nemůže nasadit (stejná pravidla ověřuje i server)
 function equipProblem(c, item) {
@@ -61,7 +62,7 @@ export default function profil(el) {
         <div class="profile-head">
           <div class="portrait">${c.avatar}</div>
           <div class="profile-info">
-            <h2>${c.name}</h2>
+            <h2>${escapeHtml(c.name)}</h2>
             <div class="subtitle">${c.className} · úroveň ${c.level}</div>
             <div class="xp-bar" title="${c.xp} / ${c.xpToNextLevel} XP">
               <div class="xp-fill" style="width: ${xpPercent}%"></div>
@@ -70,7 +71,7 @@ export default function profil(el) {
             <div class="gold">💰 ${c.gold} zlaťáků</div>
           </div>
         </div>
-        <p class="error" role="alert">${errorText}</p>
+        <p class="error" role="alert">${escapeHtml(errorText)}</p>
 
         <div class="profile-columns">
           <div>

@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PORT } from './config.js';
+import { PORT, TRUST_PROXY } from './config.js';
+import { securityHeaders, apiLimiter } from './middleware/security.js';
 import authRoutes from './routes/auth.js';
 import characterRoutes from './routes/character.js';
 import tavernRoutes from './routes/tavern.js';
@@ -13,7 +14,11 @@ import { giveStarterGearToAll } from './game/inventory.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-app.use(express.json());
+app.set('trust proxy', TRUST_PROXY);
+app.use(securityHeaders);
+// Hra posílá jen malé JSONy; větší tělo požadavku nemá smysl přijímat
+app.use(express.json({ limit: '10kb' }));
+app.use('/api', apiLimiter);
 
 // Statické soubory klienta (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '..', 'client')));
@@ -38,6 +43,9 @@ app.use('/api', (req, res) => {
 // Neočekávané chyby
 app.use((err, req, res, next) => {
   // Chyby způsobené klientem (např. nevalidní JSON) nejsou chybou serveru
+  if (err.status === 413) {
+    return res.status(413).json({ error: 'Požadavek je moc velký.' });
+  }
   if (err.status >= 400 && err.status < 500) {
     return res.status(err.status).json({ error: 'Požadavek je špatně napsaný.' });
   }

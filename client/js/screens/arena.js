@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { setCharacter } from '../state.js';
 import { playFight } from '../fight.js';
-import { formatTime, timeAgo } from '../format.js';
+import { formatTime, timeAgo, escapeHtml } from '../format.js';
 
 // Aréna: souboje s ostatními hráči (a NPC gladiátory) o čest a zlato
 export default function arena(el) {
@@ -44,8 +44,8 @@ export default function arena(el) {
           .map((h) => {
             const text =
               h.type === 'attack'
-                ? `Vyzval jsi ${h.opponentAvatar} <strong>${h.opponentName}</strong> a ${h.won ? 'vyhrál' : 'prohrál'}`
-                : `${h.opponentAvatar} <strong>${h.opponentName}</strong> tě napadl a ${h.won ? 'prohrál' : 'vyhrál'}`;
+                ? `Vyzval jsi ${h.opponentAvatar} <strong>${escapeHtml(h.opponentName)}</strong> a ${h.won ? 'vyhrál' : 'prohrál'}`
+                : `${h.opponentAvatar} <strong>${escapeHtml(h.opponentName)}</strong> tě napadl a ${h.won ? 'prohrál' : 'vyhrál'}`;
             const changes = [
               h.honorChange ? `${h.honorChange > 0 ? '+' : ''}${h.honorChange} cti` : '',
               h.gold ? `+${h.gold} 💰` : '',
@@ -64,7 +64,7 @@ export default function arena(el) {
 
   function render() {
     if (!state) {
-      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${errorText}</p>` : 'Gladiátoři se rozcvičují…'}</div>`;
+      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${escapeHtml(errorText)}</p>` : 'Gladiátoři se rozcvičují…'}</div>`;
       return;
     }
     const canFight = !busy && !state.onQuest && remaining() <= 0;
@@ -79,7 +79,7 @@ export default function arena(el) {
           <a href="#/slava">🏆 Síň slávy</a>
         </div>
         ${statusHtml()}
-        <p class="error" role="alert">${errorText}</p>
+        <p class="error" role="alert">${escapeHtml(errorText)}</p>
 
         <div class="opponent-list">
           ${state.opponents
@@ -87,7 +87,7 @@ export default function arena(el) {
               (o) => `
             <div class="opponent-card opponent-${o.type}">
               <div class="opponent-avatar">${o.avatar}</div>
-              <strong>${o.name}</strong>
+              <strong>${escapeHtml(o.name)}</strong>
               <small>${o.className} · úroveň ${o.level}</small>
               <div class="opponent-honor">${o.type === 'npc' ? '🤖 NPC gladiátor' : `🏅 ${o.honor} cti`}</div>
               <button type="button" class="btn fight-btn" data-index="${o.index}" ${canFight ? '' : 'disabled'}>Vyzvat</button>
@@ -114,7 +114,7 @@ export default function arena(el) {
       return `
         <div class="quest-result lost">
           <h2>💀 Prohra!</h2>
-          <p><em>${fight.enemy.name}</em> tě vyprovodil z arény za potlesku publika.</p>
+          <p><em>${escapeHtml(fight.enemy.name)}</em> tě vyprovodil z arény za potlesku publika.</p>
           ${honor ? `<div class="rewards">${honor}</div>` : ''}
           <button type="button" class="btn continue-btn">Zpátky do arény</button>
         </div>`;
@@ -122,7 +122,7 @@ export default function arena(el) {
     return `
       <div class="quest-result">
         <h2>🏆 Vítězství!</h2>
-        <p>Porazil jsi soupeře <em>${fight.enemy.name}</em>. Dav šílí.</p>
+        <p>Porazil jsi soupeře <em>${escapeHtml(fight.enemy.name)}</em>. Dav šílí.</p>
         <div class="rewards">
           <span>💰 +${result.gold} zlaťáků</span>
           ${honor}
@@ -134,7 +134,7 @@ export default function arena(el) {
   function showFight() {
     el.innerHTML = `
       <div class="panel">
-        <h2>⚔️ Aréna: ${fight.hero.name} vs. ${fight.enemy.name}</h2>
+        <h2>⚔️ Aréna: ${escapeHtml(fight.hero.name)} vs. ${escapeHtml(fight.enemy.name)}</h2>
         <div class="fight-area"></div>
         <div class="fight-result"></div>
       </div>`;

@@ -2,7 +2,7 @@ import { api } from '../api.js';
 import { setCharacter } from '../state.js';
 import { playFight } from '../fight.js';
 import { itemNameHtml } from '../items.js';
-import { formatTime } from '../format.js';
+import { formatTime, escapeHtml } from '../format.js';
 
 // Krčma: nabídka questů, běžící výprava s odpočtem a odměny
 export default function krcma(el) {
@@ -151,7 +151,7 @@ export default function krcma(el) {
           <span>💰 ${q.gold} zlaťáků</span>
         </div>
         ${q.item ? `<div class="reward-item">🎁 ${itemNameHtml(q.item)}</div>` : ''}
-        <p class="error" role="alert">${errorText}</p>
+        <p class="error" role="alert">${escapeHtml(errorText)}</p>
         ${
           done
             ? `<button type="button" class="btn complete-btn" ${busy ? 'disabled' : ''}>Vyzvednout odměnu</button>`
@@ -166,7 +166,7 @@ export default function krcma(el) {
         <h2>🍺 Krčma U Zlámané Halapartny</h2>
         <p class="intro">Hospodský si tě změří pohledem a vytáhne zpod pultu tři zmačkané papírky.</p>
         ${thirstBar()}
-        <p class="error" role="alert">${errorText}</p>
+        <p class="error" role="alert">${escapeHtml(errorText)}</p>
         <div class="quest-list">
           ${tavern.offers
             .map((q) => {
@@ -194,7 +194,7 @@ export default function krcma(el) {
 
   function render() {
     if (!tavern) {
-      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${errorText}</p>` : 'Hospodský hledá papíry…'}</div>`;
+      el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${escapeHtml(errorText)}</p>` : 'Hospodský hledá papíry…'}</div>`;
       return;
     }
     if (tavern.active) {

@@ -1,3 +1,5 @@
+import { escapeHtml } from './format.js';
+
 // Přehrání souboje ze záznamu, který spočítal server.
 // Použije se pro questy i (později) pro arénu.
 
@@ -7,7 +9,7 @@ function fighterHtml(side, f) {
   return `
     <div class="fighter fighter-${side}">
       <div class="fighter-avatar">${f.avatar}</div>
-      <div class="fighter-name">${f.name}</div>
+      <div class="fighter-name">${escapeHtml(f.name)}</div>
       <div class="fighter-level">úroveň ${f.level}</div>
       <div class="bar hp-bar">
         <div class="bar-fill" style="width: 100%"></div>

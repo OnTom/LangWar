@@ -17,7 +17,9 @@ Pak otevři http://localhost:3000
 |--------------|------------------|--------------------------------------------------------|
 | `PORT`       | `3000`           | Port serveru                                           |
 | `DB_FILE`    | `langwar.db`     | Soubor SQLite databáze                                 |
-| `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **na produkci povinně změnit** |
+| `NODE_ENV`   | –                | `production` zapne produkční kontroly (viz Zabezpečení) |
+| `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **v produkci povinný, aspoň 32 znaků** |
+| `TRUST_PROXY` | `0`             | Počet proxy před serverem (např. `1` za nginx/hostingem), aby limity viděly skutečnou IP |
 | `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění žízně               |
 | `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – questy i čekání v aréně (`0.05` = 5 % normální doby) |
 
@@ -28,6 +30,17 @@ QUEST_TIME_SCALE=0.05 npm run dev
 ```
 
 Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
+
+## Zabezpečení
+
+- Hesla jsou uložená jen jako hash (bcrypt), tokeny jsou podepsané (JWT, HS256)
+- V produkci (`NODE_ENV=production`) server odmítne startovat bez `JWT_SECRET` o délce aspoň 32 znaků.
+  Vygenerovat ho jde třeba příkazem `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+- Limity požadavků z jedné IP: 10 neúspěšných přihlášení za 15 min, 5 registrací za hodinu,
+  300 požadavků na API za minutu
+- Bezpečnostní hlavičky (helmet) včetně Content-Security-Policy, která povolí jen vlastní skripty
+- Tělo požadavku nejvýš 10 kB; jména hráčů a chybové zprávy se v klientovi escapují
+- Veškerá herní logika (souboje, odměny, ceny, časovače) běží na serveru
 
 ## API
 

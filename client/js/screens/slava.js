@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { escapeHtml } from '../format.js';
 
 // Síň slávy: žebříček hráčů podle cti
 export default function slava(el) {
@@ -15,7 +16,7 @@ export default function slava(el) {
           return `${gap}
             <tr class="${p.isMe ? 'me' : ''}">
               <td class="rank">${p.rank <= 3 ? ['🥇', '🥈', '🥉'][p.rank - 1] : `${p.rank}.`}</td>
-              <td>${p.avatar} <strong>${p.name}</strong></td>
+              <td>${p.avatar} <strong>${escapeHtml(p.name)}</strong></td>
               <td class="ladder-class">${p.className}</td>
               <td class="num">${p.level}</td>
               <td class="num">${p.honor}</td>
@@ -37,6 +38,6 @@ export default function slava(el) {
         </div>`;
     })
     .catch((err) => {
-      el.innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
+      el.innerHTML = `<div class="panel"><p class="error">${escapeHtml(err.message)}</p></div>`;
     });
 }

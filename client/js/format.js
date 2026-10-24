@@ -15,3 +15,13 @@ export function timeAgo(timestamp, now = Date.now()) {
   if (hours < 24) return `před ${hours} h`;
   return `před ${Math.floor(hours / 24)} d`;
 }
+
+// Bezpečné vložení textu do HTML (jména hráčů apod.)
+export function escapeHtml(text) {
+  return String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}

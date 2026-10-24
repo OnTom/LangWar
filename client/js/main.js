@@ -1,4 +1,5 @@
 import { api, setUnauthorizedHandler } from './api.js';
+import { escapeHtml } from './format.js';
 import { getToken, getUser, setUser, clearSession } from './session.js';
 import { getCharacter, setCharacter, onCharacterChange } from './state.js';
 import login from './screens/login.js';
@@ -46,7 +47,7 @@ async function loadCharacter() {
     startGame();
   } catch (err) {
     if (getUser()) {
-      clearScreen().innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
+      clearScreen().innerHTML = `<div class="panel"><p class="error">${escapeHtml(err.message)}</p></div>`;
     }
   }
 }
