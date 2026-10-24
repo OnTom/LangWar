@@ -10,7 +10,12 @@ import {
   maxHp,
   damageRange,
   critChance,
+  blockChance,
+  armorReduction,
 } from './rules.js';
+import { SLOT_KEYS } from '../data/items.js';
+import { itemView, combatProfile, INVENTORY_SIZE } from './items.js';
+import { getItems } from './inventory.js';
 
 export function findCharacter(userId) {
   return db
@@ -23,7 +28,7 @@ export function findCharacter(userId) {
 }
 
 // Dnešní datum (RRRR-MM-DD) v herním časovém pásmu
-function today() {
+export function today() {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: TIMEZONE }).format(new Date());
 }
 
@@ -46,17 +51,31 @@ export function addXp(level, xp, gained) {
   return { level: newLevel, xp: newXp, levelsGained: newLevel - level };
 }
 
+// Postava připravená do souboje (atributy včetně bonusů, zbraň, zbroj, štít)
+export function characterCombatProfile(c) {
+  return combatProfile(c, getItems(c.id, 'equipped'));
+}
+
 // Co klient dostane: uložené hodnoty + vše dopočítané serverem
 export function toView(c) {
+  const equippedRows = getItems(c.id, 'equipped');
+  const profile = combatProfile(c, equippedRows);
+  const cls = CLASSES[c.class];
+
   const attributes = {};
   for (const key of ATTRIBUTE_KEYS) {
     attributes[key] = {
       name: ATTRIBUTES[key].name,
-      value: c[key],
+      value: c[key], // vlastní body (z nich se počítá cena vylepšení)
+      bonus: profile[key] - c[key], // bonus z výbavy
+      total: profile[key],
       upgradeCost: upgradeCost(c.class, key, c[key]),
     };
   }
-  const cls = CLASSES[c.class];
+
+  const equipment = Object.fromEntries(SLOT_KEYS.map((slot) => [slot, null]));
+  for (const row of equippedRows) equipment[row.slot] = itemView(row);
+
   return {
     name: c.name,
     class: c.class,
@@ -69,12 +88,18 @@ export function toView(c) {
     gold: c.gold,
     attributes,
     stats: {
-      hp: maxHp(c),
-      damage: damageRange(c),
-      critChance: critChance(c),
-      blockChance: cls.blockChance,
+      hp: maxHp(profile),
+      damage: damageRange(profile),
+      critChance: critChance(profile),
+      armor: profile.armor,
+      armorReduction: armorReduction(profile),
+      maxArmorReduction: cls.maxArmorReduction,
+      blockChance: blockChance(profile),
       evadeChance: cls.evadeChance,
       unblockable: cls.unblockable,
     },
+    equipment,
+    inventory: getItems(c.id, 'inventory').map((row) => itemView(row)),
+    inventorySize: INVENTORY_SIZE,
   };
 }

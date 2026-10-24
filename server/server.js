@@ -5,6 +5,9 @@ import { PORT } from './config.js';
 import authRoutes from './routes/auth.js';
 import characterRoutes from './routes/character.js';
 import tavernRoutes from './routes/tavern.js';
+import inventoryRoutes from './routes/inventory.js';
+import shopRoutes from './routes/shop.js';
+import { giveStarterGearToAll } from './game/inventory.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -22,6 +25,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/character', characterRoutes);
 app.use('/api/tavern', tavernRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/shop', shopRoutes);
 
 // Neznámé API cesty
 app.use('/api', (req, res) => {
@@ -37,6 +42,9 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: 'Na serveru vybuchl lektvar. Zkus to znovu.' });
 });
+
+// Postavy založené před zavedením předmětů dostanou startovní výbavu
+giveStarterGearToAll();
 
 app.listen(PORT, () => {
   console.log(`LangWar běží na http://localhost:${PORT}`);

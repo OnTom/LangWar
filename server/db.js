@@ -46,6 +46,30 @@ db.exec(`
     ends_at      INTEGER
   );
   CREATE INDEX IF NOT EXISTS quests_character ON quests(character_id);
+
+  -- Předměty: location = inventory | equipped | shop_smith | shop_magic | quest
+  CREATE TABLE IF NOT EXISTS items (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    location     TEXT    NOT NULL,
+    quest_id     INTEGER REFERENCES quests(id) ON DELETE CASCADE, -- odměna za quest
+    slot         TEXT    NOT NULL,
+    class        TEXT,   -- jen u zbraní: pro jakou třídu
+    name         TEXT    NOT NULL,
+    icon         TEXT    NOT NULL,
+    rarity       TEXT    NOT NULL,
+    level        INTEGER NOT NULL,
+    strength     INTEGER NOT NULL DEFAULT 0,
+    dexterity    INTEGER NOT NULL DEFAULT 0,
+    intelligence INTEGER NOT NULL DEFAULT 0,
+    constitution INTEGER NOT NULL DEFAULT 0,
+    luck         INTEGER NOT NULL DEFAULT 0,
+    armor        INTEGER NOT NULL DEFAULT 0,
+    damage_min   INTEGER NOT NULL DEFAULT 0,
+    damage_max   INTEGER NOT NULL DEFAULT 0,
+    value        INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS items_character ON items(character_id, location);
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
@@ -58,5 +82,7 @@ addColumn('characters', 'thirst', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'thirst_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('quests', 'monster_icon', "TEXT NOT NULL DEFAULT '👹'");
 addColumn('quests', 'monster_class', "TEXT NOT NULL DEFAULT 'warrior'");
+addColumn('characters', 'shop_day', "TEXT NOT NULL DEFAULT ''");
+addColumn('characters', 'starter_given', 'INTEGER NOT NULL DEFAULT 0');
 
 export default db;

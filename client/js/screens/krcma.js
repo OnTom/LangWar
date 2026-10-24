@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { setCharacter } from '../state.js';
 import { playFight } from '../fight.js';
+import { itemNameHtml } from '../items.js';
 
 function formatTime(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -99,6 +100,11 @@ export default function krcma(el) {
           <span>✨ +${result.xp} XP</span>
           <span>💰 +${result.gold} zlaťáků</span>
         </div>
+        ${
+          result.item
+            ? `<p class="reward-item">🎁 ${itemNameHtml(result.item)}${result.itemSold ? `<br><small>Inventář byl plný, tak jsi to rovnou prodal za 💰 ${result.item.sellPrice} (už je v odměně).</small>` : ' <small>je v inventáři</small>'}</p>`
+            : ''
+        }
         ${result.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň! Bardi už skládají písně (špatné).</p>' : ''}
         <button type="button" class="btn continue-btn">Zpátky do krčmy</button>
       </div>`;
@@ -150,6 +156,7 @@ export default function krcma(el) {
           <span>✨ ${q.xp} XP</span>
           <span>💰 ${q.gold} zlaťáků</span>
         </div>
+        ${q.item ? `<div class="reward-item">🎁 ${itemNameHtml(q.item)}</div>` : ''}
         <p class="error" role="alert">${errorText}</p>
         ${
           done
@@ -179,6 +186,7 @@ export default function krcma(el) {
                   <span>✨ ${q.xp} XP</span>
                   <span>💰 ${q.gold}</span>
                 </div>
+                ${q.item ? `<div class="reward-item">🎁 ${itemNameHtml(q.item)}</div>` : ''}
                 <button type="button" class="btn start-btn" data-slot="${q.slot}"
                   ${busy || !affordable ? 'disabled' : ''}>
                   ${affordable ? 'Vyrazit' : 'Málo žízně'}

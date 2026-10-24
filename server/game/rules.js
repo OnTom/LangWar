@@ -19,8 +19,9 @@ export const CLASSES = {
     mainAttribute: 'strength',
     hpPerConstitution: 5,
     damageFactor: 1,
-    blockChance: 20, // % útoků, které vykryje (zatím bez štítu)
+    blockChance: 25, // % útoků, které vykryje – jen se štítem
     evadeChance: 0,
+    maxArmorReduction: 50, // zbroj sníží poškození nejvýš o 50 %
     unblockable: false,
     base: { strength: 10, dexterity: 5, intelligence: 3, constitution: 8, luck: 4 },
   },
@@ -33,6 +34,7 @@ export const CLASSES = {
     damageFactor: 2.25, // křehký, ale kouzla pořádně bolí
     blockChance: 0,
     evadeChance: 0,
+    maxArmorReduction: 10,
     unblockable: true, // kouzlům se nedá uhnout ani je vykrýt
     base: { strength: 3, dexterity: 4, intelligence: 10, constitution: 6, luck: 7 },
   },
@@ -45,6 +47,7 @@ export const CLASSES = {
     damageFactor: 1.25,
     blockChance: 0,
     evadeChance: 35, // % útoků, kterým uhne
+    maxArmorReduction: 25,
     unblockable: false,
     base: { strength: 4, dexterity: 10, intelligence: 4, constitution: 7, luck: 5 },
   },
@@ -69,14 +72,29 @@ export function maxHp(c) {
   return c.constitution * CLASSES[c.class].hpPerConstitution * (c.level + 1);
 }
 
-// Zatím bez zbraní: základní poškození podle úrovně a třídy, násobené hlavním atributem
-export function damageRange(c) {
-  const cls = CLASSES[c.class];
-  const multiplier = cls.damageFactor * (1 + c[cls.mainAttribute] / 10);
+// Funkce níže pracují s „bojovým profilem“: postava nebo monstrum včetně
+// výbavy – { class, level, strength…luck, weapon: {min, max} | null, armor, shield }
+
+// Poškození = výcvik podle úrovně + zbraň, násobené třídou a hlavním atributem
+export function damageRange(f) {
+  const cls = CLASSES[f.class];
+  const weapon = f.weapon ?? { min: 0, max: 0 };
+  const multiplier = cls.damageFactor * (1 + f[cls.mainAttribute] / 10);
   return {
-    min: Math.floor(c.level * 2 * multiplier),
-    max: Math.floor(c.level * 4 * multiplier),
+    min: Math.max(1, Math.floor((f.level + weapon.min) * multiplier)),
+    max: Math.max(1, Math.floor((f.level * 2 + weapon.max) * multiplier)),
   };
+}
+
+// Válečník vykrývá jen se štítem
+export function blockChance(f) {
+  return f.shield ? CLASSES[f.class].blockChance : 0;
+}
+
+// O kolik % sníží zbroj poškození od útočníka dané úrovně
+export function armorReduction(f, attackerLevel = f.level) {
+  const reduction = (f.armor || 0) / attackerLevel;
+  return Math.min(CLASSES[f.class].maxArmorReduction, Math.round(reduction * 10) / 10);
 }
 
 // Šance na kritický zásah v procentech proti soupeři dané úrovně, max. 50 %
@@ -91,6 +109,7 @@ export const CRIT_MULTIPLIER = 2;
 // Denní zásoba žízně v sekundách (100 minut). Quest stojí tolik žízně, jak dlouho trvá.
 export const THIRST_MAX = 100 * 60;
 export const QUEST_OFFERS = 3;
+export const QUEST_ITEM_CHANCE = 25; // % questů, které nabízí i předmět
 
 // Délka questu v minutách: na začátku krátké, s úrovní se prodlužují
 export function questDurationRange(level) {
@@ -118,7 +137,20 @@ export const QUEST_TYPES = [
 // Pojistka proti nekonečnému souboji (počet útoků celkem)
 export const MAX_FIGHT_ATTACKS = 200;
 
+const MONSTER_GROWTH = 0.2; // o kolik násobků základu monstra sílí s každou úrovní
+const MONSTER_WEAPON = 1.5; // zbraň monstra: 1,5–3× úroveň
+
 // Síla monstra: základ jeho třídy násobený podle úrovně
 export function monsterScale(level) {
-  return 0.75 + 0.12 * (level - 1);
+  return 0.75 + MONSTER_GROWTH * (level - 1);
+}
+
+// Výbava monster: zbraň jako běžná zbraň dané úrovně, zbroj podle třídy
+export function monsterGear(cls, level) {
+  const armorPerLevel = { warrior: 8, scout: 5, mage: 2 }[cls];
+  return {
+    weapon: { min: Math.round(level * MONSTER_WEAPON), max: Math.round(level * MONSTER_WEAPON * 2) },
+    armor: Math.round(level * armorPerLevel * 0.5),
+    shield: cls === 'warrior',
+  };
 }

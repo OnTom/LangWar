@@ -470,6 +470,119 @@ h3 {
 
 .quest-result.lost h2 { color: #555; }
 
+/* Předměty */
+:root {
+  --rarity-common: #6b5a45;
+  --rarity-rare: #2a6fd6;
+  --rarity-epic: #8e3fd1;
+  --rarity-legendary: #d97000;
+}
+
+.item-name { font-weight: bold; }
+.item-name.rarity-common { color: var(--rarity-common); }
+.item-name.rarity-rare { color: var(--rarity-rare); }
+.item-name.rarity-epic { color: var(--rarity-epic); }
+.item-name.rarity-legendary { color: var(--rarity-legendary); }
+
+.item-slot {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  background: #fffaf0;
+  border: 3px solid #c9b48a;
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.item-slot.empty {
+  cursor: default;
+  background: #e8d7b5;
+  border-style: dashed;
+}
+
+.item-slot.empty span {
+  font-size: 0.65rem;
+  color: #8c7f65;
+  text-align: center;
+}
+
+.item-slot.rarity-common { border-color: #a99a7c; }
+.item-slot.rarity-rare { border-color: var(--rarity-rare); box-shadow: 0 0 6px rgba(42, 111, 214, 0.4); }
+.item-slot.rarity-epic { border-color: var(--rarity-epic); box-shadow: 0 0 8px rgba(142, 63, 209, 0.5); }
+.item-slot.rarity-legendary { border-color: var(--rarity-legendary); box-shadow: 0 0 10px rgba(217, 112, 0, 0.7); }
+.item-slot:not(.empty):hover { transform: translateY(-2px); }
+.item-slot.selected { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.equipment-grid,
+.inventory-grid,
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 56px);
+  gap: 8px;
+}
+
+.equipment-grid { grid-template-columns: repeat(4, 56px); row-gap: 4px; }
+.shop-grid { grid-template-columns: repeat(6, 56px); }
+
+.equipment-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.equipment-cell small { font-size: 0.7rem; color: #7a5a2a; }
+
+.profile-columns,
+.shop-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.panel.profile,
+.panel.shop { max-width: 980px; }
+
+.item-detail-box { margin-top: 16px; }
+.hint { font-style: italic; color: #7a5a2a; }
+h3 small, .bonus { font-weight: normal; font-size: 0.8em; color: #3f7a2a; }
+h3 small { color: #7a5a2a; }
+
+.item-detail {
+  background: #fffaf0;
+  border: 3px solid #c9b48a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.item-detail.rarity-rare { border-color: var(--rarity-rare); }
+.item-detail.rarity-epic { border-color: var(--rarity-epic); }
+.item-detail.rarity-legendary { border-color: var(--rarity-legendary); }
+
+.item-detail-head { display: flex; gap: 12px; align-items: center; }
+.item-detail-icon { font-size: 2.4rem; }
+.item-meta { font-size: 0.82rem; color: #7a5a2a; }
+.item-stats { margin: 8px 0; padding-left: 20px; }
+.item-price { font-weight: bold; }
+.item-note { color: var(--accent); font-weight: bold; margin: 6px 0 0; }
+.item-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.compare-label { font-size: 0.85rem; font-style: italic; margin: 8px 0 4px; }
+
+.btn-small {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+}
+
+.refresh-btn { margin-top: 10px; }
+.reward-item { margin: -4px 0 12px; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }
@@ -492,6 +605,10 @@ h3 {
   .profile-head { gap: 12px; }
   .portrait { width: 80px; height: 80px; font-size: 3rem; }
   .fighters { gap: 6px; }
+  .profile-columns, .shop-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .item-slot { width: 52px; height: 52px; font-size: 1.7rem; }
+  .inventory-grid, .shop-grid { grid-template-columns: repeat(5, 52px); }
+  .equipment-grid { grid-template-columns: repeat(4, 52px); }
   .fighter { padding: 8px 6px; }
   .fighter-avatar { font-size: 2.5rem; }
   .vs { font-size: 1.1rem; }

@@ -2,8 +2,10 @@ import { Router } from 'express';
 import db from '../db.js';
 import { QUEST_TIME_SCALE } from '../config.js';
 import { requireAuth } from '../middleware/auth.js';
-import { THIRST_MAX } from '../game/rules.js';
-import { findCharacter, refreshThirst, addXp, toView } from '../game/character.js';
+import { THIRST_MAX, QUEST_ITEM_CHANCE } from '../game/rules.js';
+import { findCharacter, refreshThirst, addXp, toView, characterCombatProfile } from '../game/character.js';
+import { generateItem, itemView } from '../game/items.js';
+import { insertItem, inventoryFree } from '../game/inventory.js';
 import { generateOffers } from '../game/quests.js';
 import { createMonster } from '../game/monsters.js';
 import { fight } from '../game/combat.js';
@@ -26,15 +28,25 @@ const insertQuest = db.prepare(
      (@characterId, @slot, @title, @description, @monster, @monsterIcon, @monsterClass, @duration, @xp, @gold)`
 );
 
+// Nové nabídky; některé questy mají navíc předmět jako odměnu
 const createOffers = db.transaction((c) => {
-  db.prepare('DELETE FROM quests WHERE character_id = ?').run(c.id);
+  db.prepare('DELETE FROM quests WHERE character_id = ?').run(c.id); // smaže i jejich předměty
   for (const offer of generateOffers(c.level)) {
-    insertQuest.run({ characterId: c.id, ...offer });
+    const questId = insertQuest.run({ characterId: c.id, ...offer }).lastInsertRowid;
+    if (Math.random() * 100 < QUEST_ITEM_CHANCE) {
+      insertItem(c.id, 'quest', generateItem({ level: c.level, cls: c.class }), questId);
+    }
   }
 });
 
+function questItem(questId) {
+  return db.prepare("SELECT * FROM items WHERE quest_id = ? AND location = 'quest'").get(questId);
+}
+
 function questView(q) {
+  const item = questItem(q.id);
   return {
+    item: item ? itemView(item) : null,
     slot: q.slot,
     title: q.title,
     description: q.description,
@@ -93,6 +105,9 @@ router.post('/start', (req, res) => {
   if (c.thirst < quest.duration) {
     return res.status(400).json({ error: 'Máš málo žízně. Hrdina bez piva nikam nejde. Zkus to zítra.' });
   }
+  if (questItem(quest.id) && inventoryFree(c.id) <= 0) {
+    return res.status(400).json({ error: 'Na odměnu nemáš místo v inventáři. Něco prodej nebo vyhoď.' });
+  }
 
   const now = Date.now();
   const endsAt = now + Math.round(quest.duration * 1000 * QUEST_TIME_SCALE);
@@ -140,14 +155,19 @@ router.post('/complete', (req, res) => {
     cls: quest.monster_class,
     level: c.level,
   });
-  const battle = fight(c, monster);
+  const battle = fight(characterCombatProfile(c), monster);
   const won = battle.winner === 'a';
 
-  // Odměna jen za vítězství
+  // Odměna jen za vítězství. Předmět jde do inventáře; když není místo, rovnou se prodá.
   const progress = won ? addXp(c.level, c.xp, quest.xp) : { level: c.level, xp: c.xp, levelsGained: 0 };
-  const goldGained = won ? quest.gold : 0;
+  const rewardItem = won ? questItem(quest.id) : null;
+  const itemSold = rewardItem && inventoryFree(c.id) <= 0;
+  const goldGained = won ? quest.gold + (itemSold ? rewardItem.value : 0) : 0;
 
   const complete = db.transaction(() => {
+    if (rewardItem && !itemSold) {
+      db.prepare("UPDATE items SET location = 'inventory', quest_id = NULL WHERE id = ?").run(rewardItem.id);
+    }
     const removed = db.prepare('DELETE FROM quests WHERE id = ?').run(quest.id);
     if (removed.changes === 0) throw new Error('conflict');
     db.prepare('UPDATE characters SET gold = gold + ?, xp = ?, level = ? WHERE id = ?').run(
@@ -173,6 +193,8 @@ router.post('/complete', (req, res) => {
       won,
       xp: won ? quest.xp : 0,
       gold: goldGained,
+      item: rewardItem ? itemView(rewardItem) : null,
+      itemSold: Boolean(itemSold),
       levelsGained: progress.levelsGained,
     },
     fight: {

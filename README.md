@@ -45,8 +45,14 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | POST   | `/api/tavern/start`  | Vyrazit na quest `{slot}`         |
 | POST   | `/api/tavern/complete` | Vyzvednout odměnu po skončení výpravy |
 | POST   | `/api/tavern/cancel` | Vzdát výpravu (žízeň se vrátí)    |
+| POST   | `/api/inventory/equip` | Nasadit předmět `{itemId}`      |
+| POST   | `/api/inventory/unequip` | Sundat předmět `{itemId}`     |
+| POST   | `/api/inventory/sell` | Prodat předmět z inventáře `{itemId}` |
+| GET    | `/api/shop`          | Zboží zbrojíře a kouzelnice       |
+| POST   | `/api/shop/buy`      | Koupit předmět `{itemId}`         |
+| POST   | `/api/shop/refresh`  | Nové zboží za poplatek `{shop}`   |
 
-Všechny cesty `/api/character` a `/api/tavern` vyžadují token v hlavičce `Authorization: Bearer <token>`.
+Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují token v hlavičce `Authorization: Bearer <token>`.
 
 ## Herní pravidla
 
@@ -63,7 +69,17 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - **Válečník** vykryje 20 % úderů, **Lovec** uhne 35 % útoků,
   **Mágova** kouzla nejde vykrýt ani jim uhnout
 - Monstrum má úroveň hrdiny a atributy podle své třídy (`monsterScale` v pravidlech)
+- **Zbraň** přidává poškození k základu podle úrovně, **zbroj** snižuje přijaté poškození
+  (válečník nejvýš o 50 %, lovec 25 %, mág 10 %), válečník vykrývá jen se **štítem**
 - Za prohraný souboj není odměna
+
+### Předměty
+
+- 8 slotů: hlava, tělo, ruce, nohy, zbraň, štít (jen válečník), prsten, amulet; inventář má 10 míst
+- Rarity: obyčejný (70 %), vzácný (22 %), epický (7 %), legendární (1 %) – vzácnější mají víc a silnější bonusy
+- Zdroje: startovní výbava, obchody (nové zboží každý den o půlnoci nebo za poplatek)
+  a odměny z questů (asi čtvrtina questů nabízí předmět)
+- Generátor je v `server/game/items.js`, názvy a ikony v `server/data/items.js`
 
 ## Struktura
 

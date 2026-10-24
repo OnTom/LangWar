@@ -3,6 +3,7 @@ import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { ATTRIBUTES, ATTRIBUTE_KEYS, CLASSES, AVATARS, STARTING_GOLD, upgradeCost } from '../game/rules.js';
 import { findCharacter, toView } from '../game/character.js';
+import { giveStarterGear } from '../game/inventory.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -44,7 +45,9 @@ router.post('/', (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(req.user.id, cls, avatar, STARTING_GOLD, b.strength, b.dexterity, b.intelligence, b.constitution, b.luck, Date.now());
 
-  res.status(201).json({ character: toView(findCharacter(req.user.id)) });
+  const created = findCharacter(req.user.id);
+  giveStarterGear(created);
+  res.status(201).json({ character: toView(created) });
 });
 
 // POST /api/character/upgrade  { attribute }
