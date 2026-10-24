@@ -7,6 +7,7 @@ import characterRoutes from './routes/character.js';
 import tavernRoutes from './routes/tavern.js';
 import inventoryRoutes from './routes/inventory.js';
 import shopRoutes from './routes/shop.js';
+import arenaRoutes from './routes/arena.js';
 import { giveStarterGearToAll } from './game/inventory.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,7 @@ app.use('/api/character', characterRoutes);
 app.use('/api/tavern', tavernRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/shop', shopRoutes);
+app.use('/api/arena', arenaRoutes);
 
 // Neznámé API cesty
 app.use('/api', (req, res) => {

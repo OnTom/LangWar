@@ -154,3 +154,18 @@ export function monsterGear(cls, level) {
     shield: cls === 'warrior',
   };
 }
+
+// --- Aréna ------------------------------------------------------------------
+
+export const ARENA_OPPONENTS = 3;
+export const ARENA_COOLDOWN = 10 * 60; // sekund mezi souboji v aréně
+
+// Kolik cti se přesune: za výhru nad silnějším víc, za prohru se silnějším míň
+export function honorTransfer(winnerHonor, loserHonor) {
+  return Math.max(2, Math.min(25, Math.round(10 + (loserHonor - winnerHonor) / 20)));
+}
+
+// Zlato za vítězství v aréně (NPC gladiátor dá polovinu)
+export function arenaGold(level) {
+  return goldPerMinute(level) * 3;
+}

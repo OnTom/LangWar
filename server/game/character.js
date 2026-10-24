@@ -17,14 +17,26 @@ import { SLOT_KEYS } from '../data/items.js';
 import { itemView, combatProfile, INVENTORY_SIZE } from './items.js';
 import { getItems } from './inventory.js';
 
+const SELECT_CHARACTER = `SELECT c.*, u.username AS name FROM characters c JOIN users u ON u.id = c.user_id`;
+
 export function findCharacter(userId) {
+  return db.prepare(`${SELECT_CHARACTER} WHERE c.user_id = ?`).get(userId);
+}
+
+export function findCharacterById(characterId) {
+  return db.prepare(`${SELECT_CHARACTER} WHERE c.id = ?`).get(characterId);
+}
+
+// Pořadí v síni slávy (podle cti, pak úrovně, pak kdo byl dřív)
+export const RANK_ORDER = 'c.honor DESC, c.level DESC, c.id ASC';
+
+export function rankOf(characterId) {
   return db
     .prepare(
-      `SELECT c.*, u.username AS name
-       FROM characters c JOIN users u ON u.id = c.user_id
-       WHERE c.user_id = ?`
+      `SELECT rank FROM (SELECT c.id, ROW_NUMBER() OVER (ORDER BY ${RANK_ORDER}) AS rank FROM characters c)
+       WHERE id = ?`
     )
-    .get(userId);
+    .get(characterId).rank;
 }
 
 // Dnešní datum (RRRR-MM-DD) v herním časovém pásmu
@@ -86,6 +98,7 @@ export function toView(c) {
     xp: c.xp,
     xpToNextLevel: xpToNextLevel(c.level),
     gold: c.gold,
+    honor: c.honor,
     attributes,
     stats: {
       hp: maxHp(profile),

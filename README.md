@@ -19,7 +19,7 @@ Pak otevři http://localhost:3000
 | `DB_FILE`    | `langwar.db`     | Soubor SQLite databáze                                 |
 | `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **na produkci povinně změnit** |
 | `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění žízně               |
-| `QUEST_TIME_SCALE` | `1`        | Zrychlení questů pro vývoj (`0.05` = 5 % normální doby) |
+| `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – questy i čekání v aréně (`0.05` = 5 % normální doby) |
 
 Tip pro vývoj – questy trvající pár sekund místo minut:
 
@@ -51,6 +51,9 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/shop`          | Zboží zbrojíře a kouzelnice       |
 | POST   | `/api/shop/buy`      | Koupit předmět `{itemId}`         |
 | POST   | `/api/shop/refresh`  | Nové zboží za poplatek `{shop}`   |
+| GET    | `/api/arena`         | Aréna: čest, pořadí, soupeři, čekací doba, historie |
+| POST   | `/api/arena/fight`   | Vyzvat soupeře `{index}`          |
+| GET    | `/api/arena/ladder`  | Síň slávy (prvních 50 + vlastní pořadí) |
 
 Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují token v hlavičce `Authorization: Bearer <token>`.
 
@@ -80,6 +83,16 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - Zdroje: startovní výbava, obchody (nové zboží každý den o půlnoci nebo za poplatek)
   a odměny z questů (asi čtvrtina questů nabízí předmět)
 - Generátor je v `server/game/items.js`, názvy a ikony v `server/data/items.js`
+
+### Aréna
+
+- Hráč vybírá ze 3 soupeřů: skuteční hráči s podobnou ctí, chybějící místa doplní NPC gladiátoři
+  (`server/data/arena.js`)
+- Souboj počítá server z aktuální výbavy obou hráčů; obránce nemusí být online
+- Vítěz vezme poraženému čest (víc za výhru nad silnějším) a útočník dostane zlato;
+  NPC gladiátor dá polovinu zlata a žádnou čest
+- Mezi souboji je 10 minut pauza a během výpravy do arény nejde
+- Síň slávy řadí hráče podle cti
 
 ## Struktura
 

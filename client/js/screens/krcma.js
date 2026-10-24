@@ -2,13 +2,7 @@ import { api } from '../api.js';
 import { setCharacter } from '../state.js';
 import { playFight } from '../fight.js';
 import { itemNameHtml } from '../items.js';
-
-function formatTime(ms) {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = String(total % 60).padStart(2, '0');
-  return `${m}:${s}`;
-}
+import { formatTime } from '../format.js';
 
 // Krčma: nabídka questů, běžící výprava s odpočtem a odměny
 export default function krcma(el) {

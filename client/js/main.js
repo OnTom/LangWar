@@ -7,9 +7,10 @@ import profil from './screens/profil.js';
 import krcma from './screens/krcma.js';
 import arena from './screens/arena.js';
 import obchod from './screens/obchod.js';
+import slava from './screens/slava.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, arena, obchod };
+const screens = { profil, krcma, arena, obchod, slava };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
@@ -18,16 +19,19 @@ const menuEl = document.getElementById('menu');
 // Obrazovka může vrátit funkci pro úklid (např. zastavení časovače)
 let cleanupScreen = null;
 
+// Uklidí starou obrazovku a vrátí nový prázdný kontejner. Každá obrazovka má
+// vlastní kontejner, takže pozdě dorazivší data staré obrazovky už nic nepřepíšou.
 function clearScreen() {
   if (cleanupScreen) cleanupScreen();
   cleanupScreen = null;
-  screenEl.innerHTML = '';
+  const container = document.createElement('div');
+  screenEl.replaceChildren(container);
+  return container;
 }
 
 function showLogin() {
   menuEl.hidden = true;
-  clearScreen();
-  login(screenEl, { onLogin: loadCharacter });
+  login(clearScreen(), { onLogin: loadCharacter });
 }
 
 // Po přihlášení: má hráč postavu? Pokud ne, nejdřív ji vytvoří.
@@ -36,15 +40,13 @@ async function loadCharacter() {
   try {
     const { character } = await api('/character');
     if (!character) {
-      clearScreen();
-      return await vytvoreni(screenEl, { onCreated: startGame });
+      return await vytvoreni(clearScreen(), { onCreated: startGame });
     }
     setCharacter(character);
     startGame();
   } catch (err) {
     if (getUser()) {
-      clearScreen();
-      screenEl.innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
+      clearScreen().innerHTML = `<div class="panel"><p class="error">${err.message}</p></div>`;
     }
   }
 }
@@ -76,8 +78,7 @@ function router() {
     a.classList.toggle('active', a.dataset.screen === name);
   });
 
-  clearScreen();
-  const cleanup = render(screenEl);
+  const cleanup = render(clearScreen());
   if (typeof cleanup === 'function') cleanupScreen = cleanup;
 }
 

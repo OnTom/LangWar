@@ -70,6 +70,21 @@ db.exec(`
     value        INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS items_character ON items(character_id, location);
+
+  -- Historie soubojů v aréně (defender_id je NULL u NPC gladiátorů)
+  CREATE TABLE IF NOT EXISTS arena_fights (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    attacker_id     INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    defender_id     INTEGER REFERENCES characters(id) ON DELETE CASCADE,
+    defender_name   TEXT    NOT NULL,
+    defender_avatar TEXT    NOT NULL,
+    attacker_won    INTEGER NOT NULL,
+    honor_change    INTEGER NOT NULL, -- kolik cti se přesunulo
+    gold            INTEGER NOT NULL,
+    created_at      INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS arena_attacker ON arena_fights(attacker_id, created_at);
+  CREATE INDEX IF NOT EXISTS arena_defender ON arena_fights(defender_id, created_at);
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
@@ -84,5 +99,9 @@ addColumn('quests', 'monster_icon', "TEXT NOT NULL DEFAULT '👹'");
 addColumn('quests', 'monster_class', "TEXT NOT NULL DEFAULT 'warrior'");
 addColumn('characters', 'shop_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'starter_given', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'honor', 'INTEGER NOT NULL DEFAULT 100');
+addColumn('characters', 'arena_ready_at', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'arena_opponents', "TEXT NOT NULL DEFAULT ''");
+db.exec('CREATE INDEX IF NOT EXISTS characters_honor ON characters(honor)');
 
 export default db;
