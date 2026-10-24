@@ -1,5 +1,6 @@
 import { api } from '../api.js';
 import { setCharacter } from '../state.js';
+import { playFight } from '../fight.js';
 
 function formatTime(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -12,6 +13,9 @@ function formatTime(ms) {
 export default function krcma(el) {
   let tavern = null;
   let result = null; // výsledek právě dokončené výpravy
+  let fight = null; // záznam souboje k přehrání
+  let pendingCharacter = null; // nová data postavy ukážeme až po souboji
+  let stopFight = null;
   let errorText = '';
   let busy = false;
   let clockOffset = 0; // rozdíl hodin serveru a prohlížeče
@@ -48,8 +52,11 @@ export default function krcma(el) {
     const data = await call('/tavern/complete');
     if (data) {
       setTavern(data.tavern);
-      setCharacter(data.character);
       result = data.result;
+      fight = data.fight;
+      pendingCharacter = data.character;
+      showFight();
+      return;
     }
     render();
   }
@@ -74,12 +81,20 @@ export default function krcma(el) {
       </div>`;
   }
 
-  function renderResult() {
+  function resultHtml() {
+    if (!result.won) {
+      return `
+        <div class="quest-result lost">
+          <h2>💀 Prohra!</h2>
+          <p><em>${fight.enemy.name}</em> tě poslal domů s modřinou a bez odměny.</p>
+          <p>Zkus vylepšit atributy a příště to vyjde.</p>
+          <button type="button" class="btn continue-btn">Zpátky do krčmy</button>
+        </div>`;
+    }
     return `
-      <div class="panel quest-result">
+      <div class="quest-result">
         <h2>🏆 Výprava splněna!</h2>
-        <p><strong>${result.title}</strong></p>
-        <p>Porazil jsi protivníka: <em>${result.monster}</em>.</p>
+        <p>Porazil jsi protivníka: <em>${fight.enemy.name}</em>.</p>
         <div class="rewards">
           <span>✨ +${result.xp} XP</span>
           <span>💰 +${result.gold} zlaťáků</span>
@@ -87,6 +102,31 @@ export default function krcma(el) {
         ${result.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň! Bardi už skládají písně (špatné).</p>' : ''}
         <button type="button" class="btn continue-btn">Zpátky do krčmy</button>
       </div>`;
+  }
+
+  // Souboj na konci výpravy, po něm výsledek
+  function showFight() {
+    el.innerHTML = `
+      <div class="panel">
+        <h2>⚔️ ${result.title}: souboj</h2>
+        <div class="fight-area"></div>
+        <div class="fight-result"></div>
+      </div>`;
+    stopFight = playFight(el.querySelector('.fight-area'), fight, {
+      onDone: () => {
+        stopFight = null;
+        setCharacter(pendingCharacter);
+        pendingCharacter = null;
+        const box = el.querySelector('.fight-result');
+        box.innerHTML = resultHtml();
+        box.querySelector('.continue-btn').addEventListener('click', () => {
+          result = null;
+          fight = null;
+          render();
+        });
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      },
+    });
   }
 
   function renderActive() {
@@ -155,14 +195,6 @@ export default function krcma(el) {
       el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${errorText}</p>` : 'Hospodský hledá papíry…'}</div>`;
       return;
     }
-    if (result) {
-      el.innerHTML = renderResult();
-      el.querySelector('.continue-btn').addEventListener('click', () => {
-        result = null;
-        render();
-      });
-      return;
-    }
     if (tavern.active) {
       el.innerHTML = renderActive();
       el.querySelector('.complete-btn')?.addEventListener('click', complete);
@@ -177,7 +209,7 @@ export default function krcma(el) {
 
   // Každou sekundu překreslí odpočet; po doběhnutí jednou celé zobrazení
   function tick() {
-    if (!tavern?.active || result) return;
+    if (!tavern?.active || fight) return;
     const q = tavern.active;
     const remaining = q.endsAt - serverNow();
     const countdown = el.querySelector('.countdown');
@@ -205,5 +237,10 @@ export default function krcma(el) {
   timer = setInterval(tick, 250);
 
   // Úklid při odchodu z obrazovky
-  return () => clearInterval(timer);
+  return () => {
+    clearInterval(timer);
+    if (stopFight) stopFight();
+    // Odchod během souboje: odměna už je připsaná, jen ji ukážeme v menu
+    if (pendingCharacter) setCharacter(pendingCharacter);
+  };
 }

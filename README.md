@@ -51,7 +51,19 @@ Všechny cesty `/api/character` a `/api/tavern` vyžadují token v hlavičce `Au
 ## Herní pravidla
 
 Třídy, atributy a vzorce (životy, poškození, kritický zásah, ceny vylepšení)
-jsou na jednom místě v `server/game/rules.js`. Texty questů jsou v `server/data/quests.js`.
+jsou na jednom místě v `server/game/rules.js`. Texty questů a monster jsou v `server/data/quests.js`.
+
+### Souboje
+
+Souboj počítá server (`server/game/combat.js`) a klient ho jen přehraje ze záznamu.
+Bojovníci se střídají v útocích (kdo začne, je náhoda):
+
+- **Poškození** = náhodně v rozsahu podle úrovně, třídy a hlavního atributu
+- **Kritický zásah** (dvojnásobné poškození) podle Štěstí
+- **Válečník** vykryje 20 % úderů, **Lovec** uhne 35 % útoků,
+  **Mágova** kouzla nejde vykrýt ani jim uhnout
+- Monstrum má úroveň hrdiny a atributy podle své třídy (`monsterScale` v pravidlech)
+- Za prohraný souboj není odměna
 
 ## Struktura
 

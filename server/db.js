@@ -56,5 +56,7 @@ function addColumn(table, column, definition) {
 
 addColumn('characters', 'thirst', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'thirst_day', "TEXT NOT NULL DEFAULT ''");
+addColumn('quests', 'monster_icon', "TEXT NOT NULL DEFAULT '👹'");
+addColumn('quests', 'monster_class', "TEXT NOT NULL DEFAULT 'warrior'");
 
 export default db;

@@ -410,6 +410,66 @@ h3 {
 .quest-result .rewards { justify-content: center; font-size: 1.4rem; }
 .level-up { font-size: 1.2rem; font-weight: bold; color: #6a4bc4; }
 
+/* Souboj */
+.fighters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fighter {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.fighter-avatar { font-size: 3.5rem; line-height: 1.2; }
+.fighter-name { font-weight: bold; overflow-wrap: anywhere; }
+.fighter-level { font-size: 0.85rem; font-style: italic; margin-bottom: 8px; }
+.hp-bar .bar-fill { background: #b8322a; transition: width 0.4s ease-out; }
+
+.vs {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--accent);
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.fighter.hit { animation: shake 0.35s; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); background: #ffd6cc; }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.fight-log {
+  list-style: none;
+  padding: 8px 12px;
+  margin: 16px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fffaf0;
+  border: 2px solid var(--panel-dark);
+  border-radius: 6px;
+}
+
+.fight-log li { padding: 3px 0; border-bottom: 1px dashed var(--panel-dark); }
+.fight-log li:last-child { border-bottom: none; }
+.fight-log li:first-child { font-weight: bold; }
+.fight-log .log-enemy { color: #8a2a1a; }
+.fight-log .log-hero { color: #2c561d; }
+.fight-log .log-crit { font-weight: bold; }
+
+.quest-result.lost h2 { color: #555; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }
@@ -431,5 +491,9 @@ h3 {
   .player { display: flex; gap: 12px; }
   .profile-head { gap: 12px; }
   .portrait { width: 80px; height: 80px; font-size: 3rem; }
+  .fighters { gap: 6px; }
+  .fighter { padding: 8px 6px; }
+  .fighter-avatar { font-size: 2.5rem; }
+  .vs { font-size: 1.1rem; }
   #screen { padding: 16px; }
 }

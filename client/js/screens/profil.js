@@ -49,6 +49,9 @@ export default function profil(el) {
           <tr><td>❤️ Životy</td><td class="num">${c.stats.hp}</td></tr>
           <tr><td>🗡️ Poškození</td><td class="num">${c.stats.damage.min}–${c.stats.damage.max}</td></tr>
           <tr><td>🍀 Kritický zásah</td><td class="num">${c.stats.critChance} %</td></tr>
+          ${c.stats.blockChance ? `<tr><td>🛡️ Vykrytí úderu</td><td class="num">${c.stats.blockChance} %</td></tr>` : ''}
+          ${c.stats.evadeChance ? `<tr><td>💨 Uhnutí</td><td class="num">${c.stats.evadeChance} %</td></tr>` : ''}
+          ${c.stats.unblockable ? '<tr><td>✨ Kouzla nejde vykrýt ani jim uhnout</td><td class="num">✔</td></tr>' : ''}
         </table>
       </div>
     `;

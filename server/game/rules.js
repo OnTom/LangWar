@@ -18,6 +18,10 @@ export const CLASSES = {
     description: 'Řeší problémy silou. Hlavně proto, že jiné řešení nezná.',
     mainAttribute: 'strength',
     hpPerConstitution: 5,
+    damageFactor: 1,
+    blockChance: 20, // % útoků, které vykryje (zatím bez štítu)
+    evadeChance: 0,
+    unblockable: false,
     base: { strength: 10, dexterity: 5, intelligence: 3, constitution: 8, luck: 4 },
   },
   mage: {
@@ -26,6 +30,10 @@ export const CLASSES = {
     description: 'Ovládá mocná kouzla. A taky jedno na odstranění skvrn od kotlíku.',
     mainAttribute: 'intelligence',
     hpPerConstitution: 2,
+    damageFactor: 2.25, // křehký, ale kouzla pořádně bolí
+    blockChance: 0,
+    evadeChance: 0,
+    unblockable: true, // kouzlům se nedá uhnout ani je vykrýt
     base: { strength: 3, dexterity: 4, intelligence: 10, constitution: 6, luck: 7 },
   },
   scout: {
@@ -34,6 +42,10 @@ export const CLASSES = {
     description: 'Trefí veverku na sto kroků. Veverky ho proto nesnáší.',
     mainAttribute: 'dexterity',
     hpPerConstitution: 4,
+    damageFactor: 1.25,
+    blockChance: 0,
+    evadeChance: 35, // % útoků, kterým uhne
+    unblockable: false,
     base: { strength: 4, dexterity: 10, intelligence: 4, constitution: 7, luck: 5 },
   },
 };
@@ -57,20 +69,22 @@ export function maxHp(c) {
   return c.constitution * CLASSES[c.class].hpPerConstitution * (c.level + 1);
 }
 
-// Zatím bez zbraní: základní poškození podle úrovně, násobené hlavním atributem
+// Zatím bez zbraní: základní poškození podle úrovně a třídy, násobené hlavním atributem
 export function damageRange(c) {
-  const main = c[CLASSES[c.class].mainAttribute];
-  const multiplier = 1 + main / 10;
+  const cls = CLASSES[c.class];
+  const multiplier = cls.damageFactor * (1 + c[cls.mainAttribute] / 10);
   return {
     min: Math.floor(c.level * 2 * multiplier),
     max: Math.floor(c.level * 4 * multiplier),
   };
 }
 
-// Šance na kritický zásah v procentech (proti soupeři stejné úrovně), max. 50 %
-export function critChance(c) {
-  return Math.min(50, Math.round(((c.luck * 5) / (c.level * 2)) * 10) / 10);
+// Šance na kritický zásah v procentech proti soupeři dané úrovně, max. 50 %
+export function critChance(c, opponentLevel = c.level) {
+  return Math.min(50, Math.round(((c.luck * 5) / (opponentLevel * 2)) * 10) / 10);
 }
+
+export const CRIT_MULTIPLIER = 2;
 
 // --- Questy -----------------------------------------------------------------
 
@@ -98,3 +112,13 @@ export const QUEST_TYPES = [
   { xp: 0.6, gold: 1.5 },
   { xp: 1, gold: 1 },
 ];
+
+// --- Souboje a monstra ------------------------------------------------------
+
+// Pojistka proti nekonečnému souboji (počet útoků celkem)
+export const MAX_FIGHT_ATTACKS = 200;
+
+// Síla monstra: základ jeho třídy násobený podle úrovně
+export function monsterScale(level) {
+  return 0.75 + 0.12 * (level - 1);
+}

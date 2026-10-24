@@ -72,6 +72,9 @@ export function toView(c) {
       hp: maxHp(c),
       damage: damageRange(c),
       critChance: critChance(c),
+      blockChance: cls.blockChance,
+      evadeChance: cls.evadeChance,
+      unblockable: cls.unblockable,
     },
   };
 }

@@ -32,6 +32,8 @@ export function generateOffers(level) {
       title: t.title,
       description: t.description,
       monster: t.monster,
+      monsterIcon: t.monsterIcon,
+      monsterClass: t.monsterClass,
       duration: minutes * 60,
       xp: Math.max(1, Math.round(minutes * xpPerMinute(level) * type.xp * randomFactor())),
       gold: Math.max(1, Math.round(minutes * goldPerMinute(level) * type.gold * randomFactor())),

@@ -5,6 +5,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { THIRST_MAX } from '../game/rules.js';
 import { findCharacter, refreshThirst, addXp, toView } from '../game/character.js';
 import { generateOffers } from '../game/quests.js';
+import { createMonster } from '../game/monsters.js';
+import { fight } from '../game/combat.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -18,8 +20,10 @@ router.use((req, res, next) => {
 });
 
 const insertQuest = db.prepare(
-  `INSERT INTO quests (character_id, slot, title, description, monster, duration, xp, gold)
-   VALUES (@characterId, @slot, @title, @description, @monster, @duration, @xp, @gold)`
+  `INSERT INTO quests
+     (character_id, slot, title, description, monster, monster_icon, monster_class, duration, xp, gold)
+   VALUES
+     (@characterId, @slot, @title, @description, @monster, @monsterIcon, @monsterClass, @duration, @xp, @gold)`
 );
 
 const createOffers = db.transaction((c) => {
@@ -35,6 +39,7 @@ function questView(q) {
     title: q.title,
     description: q.description,
     monster: q.monster,
+    monsterIcon: q.monster_icon,
     duration: q.duration,
     xp: q.xp,
     gold: q.gold,
@@ -128,14 +133,25 @@ router.post('/complete', (req, res) => {
     return res.status(400).json({ error: 'Výprava ještě neskončila. Trpělivost je taky ctnost.' });
   }
 
-  // Souboj s monstrem přibude v dalším kroku – zatím hrdina vždy vyhraje
-  const progress = addXp(c.level, c.xp, quest.xp);
+  // Na konci výpravy čeká souboj s monstrem stejné úrovně
+  const monster = createMonster({
+    name: quest.monster,
+    icon: quest.monster_icon,
+    cls: quest.monster_class,
+    level: c.level,
+  });
+  const battle = fight(c, monster);
+  const won = battle.winner === 'a';
+
+  // Odměna jen za vítězství
+  const progress = won ? addXp(c.level, c.xp, quest.xp) : { level: c.level, xp: c.xp, levelsGained: 0 };
+  const goldGained = won ? quest.gold : 0;
 
   const complete = db.transaction(() => {
     const removed = db.prepare('DELETE FROM quests WHERE id = ?').run(quest.id);
     if (removed.changes === 0) throw new Error('conflict');
     db.prepare('UPDATE characters SET gold = gold + ?, xp = ?, level = ? WHERE id = ?').run(
-      quest.gold,
+      goldGained,
       progress.xp,
       progress.level,
       c.id
@@ -154,10 +170,16 @@ router.post('/complete', (req, res) => {
   res.json({
     result: {
       title: quest.title,
-      monster: quest.monster,
-      xp: quest.xp,
-      gold: quest.gold,
+      won,
+      xp: won ? quest.xp : 0,
+      gold: goldGained,
       levelsGained: progress.levelsGained,
+    },
+    fight: {
+      hero: { name: c.name, avatar: c.avatar, level: c.level, maxHp: battle.maxHp.a },
+      enemy: { name: monster.name, avatar: monster.avatar, level: monster.level, maxHp: battle.maxHp.b },
+      // 'a' = hrdina, 'b' = monstrum
+      log: battle.log.map((e) => ({ ...e, attacker: e.attacker === 'a' ? 'hero' : 'enemy' })),
     },
     character: toView(updated),
     tavern: tavernState(updated),
