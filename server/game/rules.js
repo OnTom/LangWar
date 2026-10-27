@@ -184,6 +184,14 @@ export const BATTLE_CRIT_MULTIPLIER = 1.5;
 export const ENEMY_SPELL_POWER = 1.4; // kouzlo nepřítele: silnější a nedá se vykrýt ani mu uhnout
 export const BATTLE_ITEM_CHANCE = 10; // % vítězství, za která padne předmět
 
+// Boss lokace: objeví se po několika výhrách v lokaci, je silnější a dá větší odměnu i jistý předmět
+export const BOSS_WINS_REQUIRED = 5;
+export const BOSS_LEVEL_BONUS = 1;
+export const BOSS_HP = 1.5;
+export const BOSS_DAMAGE = 1.2;
+export const BOSS_REWARD = 3;
+export const BOSS_RARITY_BOOST = 15;
+
 // Odměna za vítězný souboj: zhruba 10 vítězství na úroveň
 export function battleReward(level) {
   return { xp: Math.max(1, Math.round(xpToNextLevel(level) / 10)), gold: goldPerMinute(level) * 2 };

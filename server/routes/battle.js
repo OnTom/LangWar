@@ -11,6 +11,7 @@ import {
   flee,
   battleView,
   currentEnergy,
+  mapView,
 } from '../game/expedition.js';
 
 const router = Router();
@@ -48,11 +49,19 @@ router.get(
   })
 );
 
-// POST /api/battle/start  { topic }
+// GET /api/battle/map – lokace Výpravy, postup v nich a energie
+router.get(
+  '/map',
+  handle((req, res) => {
+    res.json({ map: mapView(req.character), ...energy(req.character) });
+  })
+);
+
+// POST /api/battle/start  { location, enemy?: číslo nepřítele | 'boss' }
 router.post(
   '/start',
   handle((req, res) => {
-    const row = startBattle(req.character, { topic: req.body?.topic });
+    const row = startBattle(req.character, { location: req.body?.location, enemy: req.body?.enemy });
     res.status(201).json({ battle: battleView(row), ...energy(findCharacter(req.user.id)) });
   })
 );

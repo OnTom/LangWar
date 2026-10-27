@@ -95,7 +95,8 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | POST   | `/api/lingo/task`    | Nový úkol na procvičení `{type, topic?}` |
 | POST   | `/api/lingo/answer`  | Odpověď na úkol `{taskId, answer}` |
 | GET    | `/api/battle`        | Probíhající tahový souboj (nebo `null`) a energie |
-| POST   | `/api/battle/start`  | Začít souboj (stojí 1 energii) `{topic}` |
+| GET    | `/api/battle/map`    | Mapa Výpravy: lokace, odemčení, nepřátelé, postup a boss |
+| POST   | `/api/battle/start`  | Začít souboj (stojí 1 energii) `{location, enemy?}` – `enemy` = pořadí nepřítele, `'boss'` nebo nic (náhodný) |
 | POST   | `/api/battle/action` | Zvolit útok `{action: 'light' \| 'heavy' \| 'spell'}` → úkol |
 | POST   | `/api/battle/answer` | Odpověď na úkol útoku `{answer}` → průběh kola |
 | POST   | `/api/battle/flee`   | Utéct ze souboje (bez odměny)     |
@@ -139,6 +140,14 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
   silnější hrdina (atributy, výbava) potřebuje méně zásahů a vydrží víc (`BATTLE_*` v pravidlech)
 - Zvolený útok nejde vyměnit a po obnovení stránky úkol pokračuje; když hráč nechá čas vypršet, kolo je netrefa
 - **Energie**: 50 soubojů denně (doplní se o půlnoci); výhra dá XP, zlato a s 10% šancí předmět
+
+**Mapa** (`server/data/locations.js`): 11 lokací, každá má svá témata slovíček, 3 nepřátele a bosse.
+
+- Lokace se odemyká úrovní postavy; nepřátelé mají úroveň lokace, ale nikdy nižší než hrdina
+- Hráč klikne na lokaci, hrdina tam dojde (bez čekání) a může hned bojovat s vybraným nebo náhodným nepřítelem
+- Po 5 výhrách v lokaci se ukáže **boss**: o úroveň výš, víc životů a silnější útok,
+  ale trojnásobná odměna a vždy předmět (s vyšší šancí na vzácnost); pak se musí znovu „nabít“
+- Novou lokaci přidáš úpravou `locations.js` (témata musí existovat ve slovní zásobě)
 
 ### Předměty
 

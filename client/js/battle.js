@@ -10,7 +10,7 @@ const STEP_MS = 650; // pauza mezi útokem hrdiny a odpovědí nepřítele
 function barsHtml(side, f) {
   return `
     <div class="battle-bars battle-bars-${side}">
-      <div class="battle-name">${escapeHtml(f.name)} <small>úr. ${f.level}</small></div>
+      <div class="battle-name">${f.boss ? '👑 ' : ''}${escapeHtml(f.name)} <small>úr. ${f.level}</small></div>
       <div class="bar hp-bar"><div class="bar-fill"></div><span></span></div>
       <div class="bar mana-bar"><div class="bar-fill"></div><span></span></div>
     </div>`;
@@ -61,7 +61,7 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
       <div class="battle-stage">
         <div class="battle-fighter battle-fighter-hero"><span class="fighter-avatar">${battle.hero.avatar}</span><span class="battle-float"></span></div>
         <div class="battle-location">${battle.location.icon} ${escapeHtml(battle.location.name)}</div>
-        <div class="battle-fighter battle-fighter-enemy"><span class="fighter-avatar">${battle.enemy.avatar}</span><span class="battle-float"></span></div>
+        <div class="battle-fighter battle-fighter-enemy${battle.enemy.boss ? ' boss' : ''}"><span class="fighter-avatar">${battle.enemy.avatar}</span><span class="battle-float"></span></div>
       </div>
       <div class="battle-feedback"></div>
       <div class="battle-controls"></div>
@@ -202,7 +202,7 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
     fleeBtn.hidden = true;
     const r = battle.rewards;
     const title = {
-      won: `🏆 Vítězství! Nepřítel leží na lopatkách.`,
+      won: battle.enemy.boss ? '👑 Boss poražen! Bardi o tom složí baladu.' : '🏆 Vítězství! Nepřítel leží na lopatkách.',
       lost: '💀 Porážka. Hrdina se probral v příkopu bez cti a bez bot.',
       fled: '🏃 Útěk! Nepřítel se posmívá, ale aspoň žiješ.',
     }[battle.status];
@@ -218,10 +218,10 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
         }
         <div class="battle-end-actions">
           <button type="button" class="btn again-btn">⚔️ Další souboj tady</button>
-          <button type="button" class="btn btn-secondary leave-btn">← Zpět na výpravu</button>
+          <button type="button" class="btn btn-secondary leave-btn">← Zpět na mapu</button>
         </div>
       </div>`;
-    controls.querySelector('.again-btn').addEventListener('click', () => onAgain?.(battle.location.topic));
+    controls.querySelector('.again-btn').addEventListener('click', () => onAgain?.(battle.location.key));
     controls.querySelector('.leave-btn').addEventListener('click', () => onLeave?.());
     controls.querySelector('.again-btn').focus();
     onEnd?.(battle);

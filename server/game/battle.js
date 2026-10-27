@@ -6,6 +6,8 @@ import {
   BATTLE_HERO_HITS,
   BATTLE_ENEMY_HITS,
   BATTLE_STRENGTH_LIMIT,
+  BOSS_HP,
+  BOSS_DAMAGE,
   BATTLE_CRIT_MULTIPLIER,
   ENEMY_SPELL_POWER,
   MANA_REGEN,
@@ -59,7 +61,7 @@ function averageHit(att, def, { dodge = true } = {}) {
  * Životy a poškození nepřítele se přepočítají tak, aby souboj trval pár kol,
  * ale síla obou stran (atributy, výbava, úroveň) pořád rozhodovala.
  */
-export function createBattle(hero, monster) {
+export function createBattle(hero, monster, { boss = false } = {}) {
   const h = fighter(hero, monster);
   const e = fighter(monster, hero);
 
@@ -69,13 +71,13 @@ export function createBattle(hero, monster) {
   const ratio = e.maxHp / heroHit / (h.maxHp / enemyHit); // < 1 = hrdina je silnější
   const strength = Math.min(BATTLE_STRENGTH_LIMIT, Math.max(1 / BATTLE_STRENGTH_LIMIT, Math.sqrt(ratio)));
 
-  e.maxHp = e.hp = Math.max(1, Math.round(BATTLE_HERO_HITS * strength * heroHit));
-  const damageScale = h.maxHp / (BATTLE_ENEMY_HITS / strength) / enemyHit;
+  e.maxHp = e.hp = Math.max(1, Math.round(BATTLE_HERO_HITS * strength * heroHit * (boss ? BOSS_HP : 1)));
+  const damageScale = (h.maxHp / (BATTLE_ENEMY_HITS / strength) / enemyHit) * (boss ? BOSS_DAMAGE : 1);
   e.damage = {
     min: Math.max(1, Math.round(e.damage.min * damageScale)),
     max: Math.max(1, Math.round(e.damage.max * damageScale)),
   };
-  return { hero: h, enemy: e, turn: 1, log: [] };
+  return { hero: h, enemy: { ...e, boss }, turn: 1, log: [] };
 }
 
 function rollDamage(att, def, power) {
