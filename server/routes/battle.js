@@ -98,7 +98,7 @@ router.post(
 router.post(
   '/flee',
   handle((req, res) => {
-    res.json({ battle: battleView(flee(req.character)) });
+    res.json({ battle: battleView(flee(req.character)), character: toView(findCharacter(req.user.id)) });
   })
 );
 

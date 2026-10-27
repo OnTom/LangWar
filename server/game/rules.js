@@ -102,8 +102,6 @@ export function critChance(c, opponentLevel = c.level) {
   return Math.min(50, Math.round(((c.luck * 5) / (opponentLevel * 2)) * 10) / 10);
 }
 
-export const CRIT_MULTIPLIER = 2;
-
 // --- Odměny ---------------------------------------------------------------
 
 // Základní jednotka zlata pro danou úroveň (souboje, aréna, denní úkoly, zakázky)
@@ -122,9 +120,6 @@ export function bountySwapCost(level) {
 }
 
 // --- Souboje a monstra ------------------------------------------------------
-
-// Pojistka proti nekonečnému souboji (počet útoků celkem)
-export const MAX_FIGHT_ATTACKS = 200;
 
 const MONSTER_GROWTH = 0.2; // o kolik násobků základu monstra sílí s každou úrovní
 const MONSTER_WEAPON = 1.5; // zbraň monstra: 1,5–3× úroveň
@@ -166,8 +161,8 @@ export const MANA_REGEN = 2;
 // Ladění délky souboje (cíl: zhruba 3–6 kol). Při vyrovnaných silách hrdina potřebuje
 // BATTLE_HERO_HITS těžkých zásahů a nepřítel BATTLE_ENEMY_HITS zásahů. Silnější strana
 // (atributy, výbava, úroveň) potřebuje zásahů méně, slabší víc – nejvýš o polovinu.
-export const BATTLE_HERO_HITS = 4.5;
-export const BATTLE_ENEMY_HITS = 6;
+export const BATTLE_HERO_HITS = 5;
+export const BATTLE_ENEMY_HITS = 6.5;
 export const BATTLE_STRENGTH_LIMIT = 1.5;
 export const BATTLE_CRIT_MULTIPLIER = 1.5;
 export const ENEMY_SPELL_POWER = 1.4; // kouzlo nepřítele: silnější a nedá se vykrýt ani mu uhnout

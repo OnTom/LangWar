@@ -198,33 +198,45 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
     show();
   }
 
+  function rewardsHtml(r) {
+    if (!r) return '';
+    const parts = [];
+    if (r.xp) parts.push(`<span>✨ +${r.xp} XP</span>`);
+    if (r.gold) parts.push(`<span>💰 +${r.gold} zlaťáků</span>`);
+    if (r.honorChange) parts.push(`<span>🏅 ${r.honorChange > 0 ? '+' : ''}${r.honorChange} cti</span>`);
+    return `
+      ${parts.length ? `<div class="rewards">${parts.join('')}</div>` : ''}
+      ${r.item ? `<p class="reward-item">🎁 ${itemNameHtml(r.item)} ${r.itemSold ? `<br><small>Inventář byl plný, tak předmět rovnou putoval k obchodníkovi za 💰 ${r.item.sellPrice}.</small>` : '<small>je v inventáři</small>'}</p>` : ''}
+      ${r.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň! Bardi už skládají písně (špatné).</p>' : ''}`;
+  }
+
   function renderEnd() {
     fleeBtn.hidden = true;
-    const r = battle.rewards;
-    const title = {
-      won: battle.enemy.boss ? '👑 Boss poražen! Bardi o tom složí baladu.' : '🏆 Vítězství! Nepřítel leží na lopatkách.',
-      lost: '💀 Porážka. Hrdina se probral v příkopu bez cti a bez bot.',
-      fled: '🏃 Útěk! Nepřítel se posmívá, ale aspoň žiješ.',
-    }[battle.status];
+    const arena = battle.kind === 'arena';
+    const title = arena
+      ? {
+          won: '🏆 Vítězství! Dav šílí a prodavač klobás dává slevu.',
+          lost: '💀 Prohra! Publikum tleská – ale soupeři.',
+          fled: '🏃 Útěk z arény! Dav píská, čest je fuč.',
+        }[battle.status]
+      : {
+          won: battle.enemy.boss ? '👑 Boss poražen! Bardi o tom složí baladu.' : '🏆 Vítězství! Nepřítel leží na lopatkách.',
+          lost: '💀 Porážka. Hrdina se probral v příkopu bez cti a bez bot.',
+          fled: '🏃 Útěk! Nepřítel se posmívá, ale aspoň žiješ.',
+        }[battle.status];
     controls.innerHTML = `
       <div class="battle-end battle-end-${battle.status}">
         <h3>${title}</h3>
-        ${
-          r
-            ? `<div class="rewards"><span>✨ +${r.xp} XP</span><span>💰 +${r.gold} zlaťáků</span></div>
-               ${r.item ? `<p class="reward-item">🎁 ${itemNameHtml(r.item)} ${r.itemSold ? `<br><small>Inventář byl plný, tak jsi to rovnou prodal za 💰 ${r.item.sellPrice}.</small>` : '<small>je v inventáři</small>'}</p>` : ''}
-               ${r.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň! Bardi už skládají písně (špatné).</p>' : ''}`
-            : ''
-        }
+        ${rewardsHtml(battle.rewards)}
         ${battle.bountiesDone.map((t) => `<p class="bounty-done">📜 Zakázka splněna: ${escapeHtml(t)} – odměna čeká v krčmě.</p>`).join('')}
         <div class="battle-end-actions">
-          <button type="button" class="btn again-btn">⚔️ Další souboj tady</button>
-          <button type="button" class="btn btn-secondary leave-btn">← Zpět na mapu</button>
+          ${onAgain ? '<button type="button" class="btn again-btn">⚔️ Další souboj tady</button>' : ''}
+          <button type="button" class="btn ${onAgain ? 'btn-secondary' : ''} leave-btn">${arena ? '← Zpět do arény' : '← Zpět na mapu'}</button>
         </div>
       </div>`;
-    controls.querySelector('.again-btn').addEventListener('click', () => onAgain?.(battle.location.key));
+    controls.querySelector('.again-btn')?.addEventListener('click', () => onAgain(battle.location.key));
     controls.querySelector('.leave-btn').addEventListener('click', () => onLeave?.());
-    controls.querySelector('.again-btn').focus();
+    (controls.querySelector('.again-btn') ?? controls.querySelector('.leave-btn')).focus();
     onEnd?.(battle);
   }
 
@@ -236,12 +248,17 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
   }
 
   fleeBtn.addEventListener('click', async () => {
-    if (!confirm('Opravdu utéct? Souboj skončí bez odměny a energie se nevrací.')) return;
+    const warning =
+      battle.kind === 'arena'
+        ? 'Opravdu utéct? V aréně se útěk počítá jako prohra.'
+        : 'Opravdu utéct? Souboj skončí bez odměny a energie se nevrací.';
+    if (!confirm(warning)) return;
     try {
       const data = await api('/battle/flee', { method: 'POST' });
       if (!alive) return;
       stopTask?.();
       battle = data.battle;
+      if (data.character) onCharacter?.(data.character);
       show();
     } catch (err) {
       errorEl.textContent = err.message;

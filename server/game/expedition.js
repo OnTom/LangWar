@@ -22,6 +22,7 @@ import { insertItem, inventoryFree } from './inventory.js';
 import { guildBonus, applyBonus } from './guild.js';
 import { progressDaily } from './daily.js';
 import { progressBounties } from './bounties.js';
+import { finishArenaBattle } from './arena.js';
 
 export class BattleError extends Error {
   constructor(message, status = 400) {
@@ -79,6 +80,7 @@ export function battleView(row) {
   return {
     id: row.id,
     status: row.status,
+    kind: state.kind ?? 'expedition',
     turn: state.turn,
     location: state.location,
     hero: publicFighter(state.hero),
@@ -230,7 +232,9 @@ function playTurn(c, row, answer) {
   } else {
     state.mistakes = (state.mistakes ?? 0) + 1;
   }
-  if (outcome === 'won') {
+  if (outcome && state.kind === 'arena') {
+    state.rewards = finishArenaBattle(c, state, outcome);
+  } else if (outcome === 'won') {
     state.rewards = giveRewards(c, state);
     recordWin(c, state);
     progressDaily(c.id, 'quest_win');
@@ -243,8 +247,9 @@ function playTurn(c, row, answer) {
         flawless: !state.mistakes,
       })
     );
+  } else if (outcome === 'lost') {
+    state.rewards = null;
   }
-  if (outcome === 'lost') state.rewards = null;
   if (bounties.length) state.bountiesDone = [...(state.bountiesDone ?? []), ...bounties];
   const saved = save(row, state, { status: outcome ?? 'active', pending_action: null, task_id: null });
   return { row: saved, result, events };
@@ -267,12 +272,16 @@ export function resolveExpired(c) {
   return db.transaction(() => playTurn(c, row, null))().row;
 }
 
-/** Útěk: souboj končí bez odměny (energie se nevrací). */
+/** Útěk: souboj končí bez odměny (energie se nevrací, v aréně se počítá jako prohra). */
 export function flee(c) {
   const row = findActive(c.id);
   if (!row) throw new BattleError('Teď nebojuješ.', 404);
-  if (row.task_id) db.prepare('DELETE FROM lingo_tasks WHERE id = ?').run(row.task_id);
-  return save(row, JSON.parse(row.state), { status: 'fled', pending_action: null, task_id: null });
+  return db.transaction(() => {
+    if (row.task_id) db.prepare('DELETE FROM lingo_tasks WHERE id = ?').run(row.task_id);
+    const state = JSON.parse(row.state);
+    if (state.kind === 'arena') state.rewards = finishArenaBattle(c, state, 'fled');
+    return save(row, state, { status: 'fled', pending_action: null, task_id: null });
+  })();
 }
 
 export function activeBattle(c) {

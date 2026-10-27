@@ -70,8 +70,8 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/shop`          | Zboží zbrojíře a kouzelnice       |
 | POST   | `/api/shop/buy`      | Koupit předmět `{itemId}`         |
 | POST   | `/api/shop/refresh`  | Nové zboží za poplatek `{shop}`   |
-| GET    | `/api/arena`         | Aréna: čest, pořadí, soupeři, čekací doba, historie |
-| POST   | `/api/arena/fight`   | Vyzvat soupeře `{index}`          |
+| GET    | `/api/arena`         | Aréna: čest, pořadí, soupeři, čekací doba, historie a rozehraný souboj |
+| POST   | `/api/arena/fight`   | Vyzvat soupeře `{index}` → tahový souboj (dál přes `/api/battle/action` a `/answer`) |
 | GET    | `/api/arena/ladder`  | Síň slávy (prvních 50 + vlastní pořadí) |
 | GET    | `/api/daily`         | Dnešní úkoly a stav truhly        |
 | POST   | `/api/daily/claim`   | Vyzvednout odměnu za úkol `{slot}` |
@@ -110,19 +110,15 @@ Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují toke
 Třídy, atributy a vzorce (životy, poškození, kritický zásah, ceny vylepšení)
 jsou na jednom místě v `server/game/rules.js`. Lokace a nepřátelé jsou v `server/data/locations.js`.
 
-### Souboje
+### Atributy v souboji
 
-Souboj počítá server (`server/game/combat.js`) a klient ho jen přehraje ze záznamu.
-Bojovníci se střídají v útocích (kdo začne, je náhoda):
+Všechny souboje (výprava i aréna) jsou tahové se slovíčky, viz níže. Atributy a výbava rozhodují o síle:
 
-- **Poškození** = náhodně v rozsahu podle úrovně, třídy a hlavního atributu
-- **Kritický zásah** (dvojnásobné poškození) podle Štěstí
-- **Válečník** vykryje 20 % úderů, **Lovec** uhne 35 % útoků,
-  **Mágova** kouzla nejde vykrýt ani jim uhnout
-- Monstrum má úroveň hrdiny a atributy podle své třídy (`monsterScale` v pravidlech)
-- **Zbraň** přidává poškození k základu podle úrovně, **zbroj** snižuje přijaté poškození
-  (válečník nejvýš o 50 %, lovec 25 %, mág 10 %), válečník vykrývá jen se **štítem**
-- Za prohraný souboj není odměna
+- **Poškození** = náhodně v rozsahu podle úrovně, třídy, hlavního atributu a zbraně
+- **Kritický zásah** (1,5× poškození) podle Štěstí
+- **Válečník** se štítem vykryje 25 % úderů, **Lovec** uhne 35 % útoků
+- **Zbroj** snižuje přijaté poškození (válečník nejvýš o 50 %, lovec 25 %, mág 10 %)
+- Monstra mají atributy podle své třídy a úrovně (`monsterScale` v pravidlech)
 
 ### Tahový souboj (Výprava)
 
@@ -136,7 +132,9 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
   Nepřítel s manou občas sešle kouzlo, kterému se nedá uhnout.
 - **Mana** = 5 + 2 × Inteligence, každé kolo se doplní 2 body
 - Životy a poškození nepřítele se přepočítají tak, aby souboj trval zhruba 3–6 kol;
-  silnější hrdina (atributy, výbava) potřebuje méně zásahů a vydrží víc (`BATTLE_*` v pravidlech)
+  silnější strana (atributy, výbava, úroveň) potřebuje méně zásahů a vydrží víc (`BATTLE_*` v pravidlech).
+  Podle simulace: bezchybný hráč vyhraje za ~3 kola, s 60 % správných odpovědí za ~5 kol
+  a vyhraje asi 85–98 % soubojů; se 40 % správných už často prohrává
 - Zvolený útok nejde vyměnit a po obnovení stránky úkol pokračuje; když hráč nechá čas vypršet, kolo je netrefa
 - **Energie**: 50 soubojů denně (doplní se o půlnoci); výhra dá XP, zlato a s 10% šancí předmět
 
@@ -160,10 +158,12 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
 
 - Hráč vybírá ze 3 soupeřů: skuteční hráči s podobnou ctí, chybějící místa doplní NPC gladiátoři
   (`server/data/arena.js`)
-- Souboj počítá server z aktuální výbavy obou hráčů; obránce nemusí být online
+- Souboj je **tahový se slovíčky** jako na výpravě; za soupeře hraje počítač podle jeho atributů
+  a výbavy, takže obránce nemusí být online. Slovíčka jsou ze všech odemčených lokací.
+- Útěk se počítá jako prohra; během souboje na výpravě do arény nejde (jeden souboj naráz)
 - Vítěz vezme poraženému čest (víc za výhru nad silnějším) a útočník dostane zlato;
   NPC gladiátor dá polovinu zlata a žádnou čest
-- Mezi souboji je 10 minut pauza
+- Mezi souboji je 10 minut pauza (běží od začátku souboje); aréna nestojí energii
 - Prvních 5 výher v aréně každý den dá navíc XP
 - Síň slávy řadí hráče podle cti
 
