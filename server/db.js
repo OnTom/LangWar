@@ -171,6 +171,19 @@ db.exec(`
     last_seen    INTEGER NOT NULL,
     PRIMARY KEY (character_id, word_id)
   );
+
+  -- Tahové souboje řízené hráčem. state = JSON se stavem obou bojovníků a záznamem.
+  CREATE TABLE IF NOT EXISTS battles (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id   INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    status         TEXT    NOT NULL DEFAULT 'active', -- active | won | lost | fled
+    state          TEXT    NOT NULL,
+    pending_action TEXT,
+    task_id        TEXT,
+    created_at     INTEGER NOT NULL,
+    updated_at     INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS battles_character ON battles(character_id, status);
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
@@ -191,6 +204,8 @@ addColumn('characters', 'arena_opponents', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'daily_chest_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'arena_xp_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'arena_xp_wins', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'energy', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'energy_day', "TEXT NOT NULL DEFAULT ''");
 db.exec('CREATE INDEX IF NOT EXISTS characters_honor ON characters(honor)');
 
 export default db;

@@ -193,6 +193,18 @@ export function createTask(characterId, { type, topics = null, context = 'practi
   return publicTask(db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(id));
 }
 
+/**
+ * Nezodpovězený úkol (např. po obnovení stránky během souboje).
+ * Vrací { task, expired } – expired = čas i s tolerancí vypršel – nebo null.
+ */
+export function openTask(characterId, taskId) {
+  const row = db
+    .prepare('SELECT * FROM lingo_tasks WHERE id = ? AND character_id = ? AND answered_at IS NULL')
+    .get(String(taskId), characterId);
+  if (!row) return null;
+  return { task: publicTask(row), expired: Date.now() > row.expires_at + GRACE_MS };
+}
+
 function recordStat(characterId, wordId, correct) {
   db.prepare(
     `INSERT INTO word_stats (character_id, word_id, correct, wrong, last_seen) VALUES (?, ?, ?, ?, ?)

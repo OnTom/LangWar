@@ -155,6 +155,40 @@ export function monsterGear(cls, level) {
   };
 }
 
+// --- Tahové souboje (Výprava) -----------------------------------------------
+
+// Denní energie: každý souboj na výpravě stojí 1 bod
+export const ENERGY_MAX = 50;
+
+// Útoky hráče. Každý útok = jazykový úkol; zásah jen při správné odpovědi.
+// power násobí hod poškození, mana = cena.
+export const BATTLE_ACTIONS = {
+  light: { name: 'Lehký útok', icon: '🗡️', task: 'choice', power: 0.6, mana: 0 },
+  heavy: { name: 'Těžký útok', icon: '🪓', task: 'translate', power: 1, mana: 0 },
+  spell: { name: 'Kouzlo', icon: '✨', task: 'reverse', power: 1.5, mana: 10 },
+};
+
+// Mana: základ + 2 body za každý bod Inteligence; každé kolo se trochu doplní
+export function maxMana(f) {
+  return 5 + f.intelligence * 2;
+}
+export const MANA_REGEN = 2;
+
+// Ladění délky souboje (cíl: zhruba 3–6 kol). Při vyrovnaných silách hrdina potřebuje
+// BATTLE_HERO_HITS těžkých zásahů a nepřítel BATTLE_ENEMY_HITS zásahů. Silnější strana
+// (atributy, výbava, úroveň) potřebuje zásahů méně, slabší víc – nejvýš o polovinu.
+export const BATTLE_HERO_HITS = 4.5;
+export const BATTLE_ENEMY_HITS = 6;
+export const BATTLE_STRENGTH_LIMIT = 1.5;
+export const BATTLE_CRIT_MULTIPLIER = 1.5;
+export const ENEMY_SPELL_POWER = 1.4; // kouzlo nepřítele: silnější a nedá se vykrýt ani mu uhnout
+export const BATTLE_ITEM_CHANCE = 10; // % vítězství, za která padne předmět
+
+// Odměna za vítězný souboj: zhruba 10 vítězství na úroveň
+export function battleReward(level) {
+  return { xp: Math.max(1, Math.round(xpToNextLevel(level) / 10)), gold: goldPerMinute(level) * 2 };
+}
+
 // --- Aréna ------------------------------------------------------------------
 
 export const ARENA_OPPONENTS = 3;

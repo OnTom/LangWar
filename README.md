@@ -94,6 +94,11 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/lingo/words?topic=…` | Slova tématu se statistikou |
 | POST   | `/api/lingo/task`    | Nový úkol na procvičení `{type, topic?}` |
 | POST   | `/api/lingo/answer`  | Odpověď na úkol `{taskId, answer}` |
+| GET    | `/api/battle`        | Probíhající tahový souboj (nebo `null`) a energie |
+| POST   | `/api/battle/start`  | Začít souboj (stojí 1 energii) `{topic}` |
+| POST   | `/api/battle/action` | Zvolit útok `{action: 'light' \| 'heavy' \| 'spell'}` → úkol |
+| POST   | `/api/battle/answer` | Odpověď na úkol útoku `{answer}` → průběh kola |
+| POST   | `/api/battle/flee`   | Utéct ze souboje (bez odměny)     |
 | GET    | `/api/chat?channel=global\|guild` | Posledních 50 zpráv  |
 | POST   | `/api/chat`          | Poslat zprávu `{channel, text}`   |
 | WS     | `/ws`                | Zprávy chatu v reálném čase (viz `server/ws.js`) |
@@ -118,6 +123,22 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - **Zbraň** přidává poškození k základu podle úrovně, **zbroj** snižuje přijaté poškození
   (válečník nejvýš o 50 %, lovec 25 %, mág 10 %), válečník vykrývá jen se **štítem**
 - Za prohraný souboj není odměna
+
+### Tahový souboj (Výprava)
+
+Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/game/expedition.js`):
+
+- Hráč zvolí útok a splní úkol se slovíčkem – **správná odpověď vždy zasáhne, špatná nebo pozdní mine**
+  - 🗡️ **Lehký útok**: výběr ze 4 překladů (DE → CZ, 10 s), síla ×0,6, zdarma
+  - 🪓 **Těžký útok**: psaný překlad do češtiny (15 s), síla ×1, zdarma
+  - ✨ **Kouzlo**: psaný překlad do němčiny (15 s), síla ×1,5, stojí 10 many
+- Pak útočí nepřítel; hrdinova obrana (štít válečníka, úhyb lovce) i zbroj platí.
+  Nepřítel s manou občas sešle kouzlo, kterému se nedá uhnout.
+- **Mana** = 5 + 2 × Inteligence, každé kolo se doplní 2 body
+- Životy a poškození nepřítele se přepočítají tak, aby souboj trval zhruba 3–6 kol;
+  silnější hrdina (atributy, výbava) potřebuje méně zásahů a vydrží víc (`BATTLE_*` v pravidlech)
+- Zvolený útok nejde vyměnit a po obnovení stránky úkol pokračuje; když hráč nechá čas vypršet, kolo je netrefa
+- **Energie**: 50 soubojů denně (doplní se o půlnoci); výhra dá XP, zlato a s 10% šancí předmět
 
 ### Předměty
 
