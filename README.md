@@ -27,10 +27,10 @@ obnova: `npm run restore -- backups/soubor.db` (při vypnutém serveru).
 | `NODE_ENV`   | –                | `production` zapne produkční kontroly (viz Zabezpečení) |
 | `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **v produkci povinný, aspoň 32 znaků** |
 | `TRUST_PROXY` | `0`             | Počet proxy před serverem (např. `1` za nginx/hostingem), aby limity viděly skutečnou IP |
-| `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění žízně               |
-| `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – questy i čekání v aréně (`0.05` = 5 % normální doby) |
+| `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění energie a denní úkoly |
+| `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – čekání v aréně (`0.05` = 5 % normální doby) |
 
-Tip pro vývoj – questy trvající pár sekund místo minut:
+Tip pro vývoj – aréna bez dlouhého čekání:
 
 ```bash
 QUEST_TIME_SCALE=0.05 npm run dev
@@ -61,10 +61,9 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | GET    | `/api/character`     | Postava přihlášeného hráče (nebo `null`) |
 | POST   | `/api/character`     | Vytvoření postavy `{class, avatar}` |
 | POST   | `/api/character/upgrade` | Vylepšení atributu za zlato `{attribute}` |
-| GET    | `/api/tavern`        | Krčma: žízeň, nabídky questů nebo běžící výprava |
-| POST   | `/api/tavern/start`  | Vyrazit na quest `{slot}`         |
-| POST   | `/api/tavern/complete` | Vyzvednout odměnu po skončení výpravy |
-| POST   | `/api/tavern/cancel` | Vzdát výpravu (žízeň se vrátí)    |
+| GET    | `/api/tavern`        | Krčma: zakázky, denní úkoly a postava |
+| POST   | `/api/tavern/claim`  | Vyzvednout odměnu za splněnou zakázku `{slot}` |
+| POST   | `/api/tavern/swap`   | Vyměnit zakázku za jinou (stojí zlato) `{slot}` |
 | POST   | `/api/inventory/equip` | Nasadit předmět `{itemId}`      |
 | POST   | `/api/inventory/unequip` | Sundat předmět `{itemId}`     |
 | POST   | `/api/inventory/sell` | Prodat předmět z inventáře `{itemId}` |
@@ -109,7 +108,7 @@ Všechny cesty kromě `/api/health` a `/api/auth/register|login` vyžadují toke
 ## Herní pravidla
 
 Třídy, atributy a vzorce (životy, poškození, kritický zásah, ceny vylepšení)
-jsou na jednom místě v `server/game/rules.js`. Texty questů a monster jsou v `server/data/quests.js`.
+jsou na jednom místě v `server/game/rules.js`. Lokace a nepřátelé jsou v `server/data/locations.js`.
 
 ### Souboje
 
@@ -154,7 +153,7 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
 - 8 slotů: hlava, tělo, ruce, nohy, zbraň, štít (jen válečník), prsten, amulet; inventář má 10 míst
 - Rarity: obyčejný (70 %), vzácný (22 %), epický (7 %), legendární (1 %) – vzácnější mají víc a silnější bonusy
 - Zdroje: startovní výbava, obchody (nové zboží každý den o půlnoci nebo za poplatek)
-  a odměny z questů (asi čtvrtina questů nabízí předmět)
+  a odměny ze soubojů, bossů, zakázek a denní truhly
 - Generátor je v `server/game/items.js`, názvy a ikony v `server/data/items.js`
 
 ### Aréna
@@ -164,13 +163,24 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
 - Souboj počítá server z aktuální výbavy obou hráčů; obránce nemusí být online
 - Vítěz vezme poraženému čest (víc za výhru nad silnějším) a útočník dostane zlato;
   NPC gladiátor dá polovinu zlata a žádnou čest
-- Mezi souboji je 10 minut pauza a během výpravy do arény nejde
+- Mezi souboji je 10 minut pauza
 - Prvních 5 výher v aréně každý den dá navíc XP
 - Síň slávy řadí hráče podle cti
 
-### Denní úkoly
+### Krčma: zakázky a denní úkoly
 
-- Každý den 3 náhodné úkoly (výpravy, aréna, obchod, vylepšování…), odměna zlato + XP
+Krčma slouží jen k vydávání úkolů, bojuje se na Výpravě (`server/game/bounties.js`).
+
+- Hospodský má na nástěnce 3 různé **zakázky**, které se plní souboji:
+  porazit konkrétního nepřítele v lokaci, vyhrát několik soubojů v lokaci, porazit bosse,
+  zasáhnout kouzlem nebo vyhrát souboj bez jediné chyby
+- Odměna: XP a zlato podle úrovně (s bonusem cechu), u části zakázek navíc předmět;
+  po vyzvednutí přijde nová zakázka, nesplněnou jde za trochu zlata vyměnit za jiný druh
+- Lokace v zakázkách se vybírají hlavně z nejnovějších odemčených
+
+**Denní úkoly** visí v krčmě na vývěsce:
+
+- Každý den 3 náhodné úkoly (výhry na výpravě, správná slovíčka, zakázky, aréna, obchod, vylepšování…), odměna zlato + XP
 - Po vyzvednutí všech tří jde otevřít truhla s předmětem (vyšší šance na vzácnost)
 - Druhy úkolů jsou v `server/data/daily.js`, počítadla se volají přes `progressDaily()`
 

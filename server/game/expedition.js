@@ -21,6 +21,7 @@ import { generateItem, itemView } from './items.js';
 import { insertItem, inventoryFree } from './inventory.js';
 import { guildBonus, applyBonus } from './guild.js';
 import { progressDaily } from './daily.js';
+import { progressBounties } from './bounties.js';
 
 export class BattleError extends Error {
   constructor(message, status = 400) {
@@ -96,6 +97,7 @@ export function battleView(row) {
     task: pending && !pending.expired ? pending.task : null,
     log: state.log,
     rewards: state.rewards ?? null,
+    bountiesDone: state.bountiesDone ?? [],
   };
 }
 
@@ -214,20 +216,36 @@ function playTurn(c, row, answer) {
   const state = JSON.parse(row.state);
   let result;
   try {
-    result = answerTask(c.id, row.task_id, answer);
+    result = answerTask(c.id, row.task_id, answer, { context: `battle:${row.id}` });
   } catch (err) {
     if (!(err instanceof TaskError)) throw err;
     // Úkol mezitím zmizel (např. byl smazán jako starý) – počítá se jako netrefa
     result = { correct: false, timedOut: true, expected: null, word: null };
   }
   const { events, outcome } = playRound(state, row.pending_action, { correct: result.correct, word: result.word });
-  if (outcome) {
-    state.rewards = outcome === 'won' ? giveRewards(c, state) : null;
-    if (outcome === 'won') {
-      recordWin(c, state);
-      progressDaily(c.id, 'quest_win');
-    }
+  const bounties = [];
+  if (result.correct) {
+    progressDaily(c.id, 'correct_words');
+    if (row.pending_action === 'spell') bounties.push(...progressBounties(c.id, { type: 'spell' }));
+  } else {
+    state.mistakes = (state.mistakes ?? 0) + 1;
   }
+  if (outcome === 'won') {
+    state.rewards = giveRewards(c, state);
+    recordWin(c, state);
+    progressDaily(c.id, 'quest_win');
+    bounties.push(
+      ...progressBounties(c.id, {
+        type: 'win',
+        location: state.location.key,
+        enemy: state.enemyIndex,
+        boss: state.enemy.boss,
+        flawless: !state.mistakes,
+      })
+    );
+  }
+  if (outcome === 'lost') state.rewards = null;
+  if (bounties.length) state.bountiesDone = [...(state.bountiesDone ?? []), ...bounties];
   const saved = save(row, state, { status: outcome ?? 'active', pending_action: null, task_id: null });
   return { row: saved, result, events };
 }

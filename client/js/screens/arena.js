@@ -24,9 +24,6 @@ export default function arena(el) {
   const remaining = () => (state ? state.readyAt - serverNow() : 0);
 
   function statusHtml() {
-    if (state.onQuest) {
-      return '<p class="arena-status">🗺️ Jsi na výpravě. Do arény můžeš, až se vrátíš z krčmy.</p>';
-    }
     if (remaining() > 0) {
       return `<p class="arena-status">😮‍💨 Další souboj za <strong class="arena-countdown">${formatTime(remaining())}</strong></p>`;
     }
@@ -67,7 +64,7 @@ export default function arena(el) {
       el.innerHTML = `<div class="panel">${errorText ? `<p class="error">${escapeHtml(errorText)}</p>` : 'Gladiátoři se rozcvičují…'}</div>`;
       return;
     }
-    const canFight = !busy && !state.onQuest && remaining() <= 0;
+    const canFight = !busy && remaining() <= 0;
 
     el.innerHTML = `
       <div class="panel arena">

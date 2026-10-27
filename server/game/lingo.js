@@ -217,11 +217,14 @@ export class TaskError extends Error {}
 
 /**
  * Vyhodnotí odpověď. Každý úkol jde zodpovědět jen jednou.
+ * context – když je zadaný, úkol musí patřit k němu (jinak se odpověď odmítne).
  * Vrací { correct, timedOut, expected, word: { de, cz }, context }.
  */
-export function answerTask(characterId, taskId, answer) {
+export function answerTask(characterId, taskId, answer, { context = null } = {}) {
   const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ? AND character_id = ?').get(String(taskId), characterId);
   if (!row) throw new TaskError('Takový úkol neexistuje nebo už vypršel.');
+  // Úkol jiného druhu (např. ze souboje) se tady nesmí ani „spotřebovat“
+  if (context && row.context !== context) throw new TaskError('Tenhle úkol patří k souboji.');
 
   const now = Date.now();
   const claimed = db

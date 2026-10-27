@@ -11,6 +11,7 @@ import {
   topicWords,
   TaskError,
 } from '../game/lingo.js';
+import { progressDaily } from '../game/daily.js';
 
 // Slovníček: přehled slov a procvičování (bez odměn, jen pro učení)
 const router = Router();
@@ -51,11 +52,9 @@ router.post('/task', (req, res) => {
 // POST /api/lingo/answer  { taskId, answer }
 router.post('/answer', (req, res) => {
   try {
-    const result = answerTask(req.character.id, req.body?.taskId, req.body?.answer);
-    if (result.context !== 'practice') {
-      // Úkoly ze souboje se vyhodnocují přes souboj, ne tady
-      return res.status(400).json({ error: 'Tenhle úkol patří k souboji.' });
-    }
+    // Úkoly ze souboje se vyhodnocují přes souboj, ne tady
+    const result = answerTask(req.character.id, req.body?.taskId, req.body?.answer, { context: 'practice' });
+    if (result.correct) progressDaily(req.character.id, 'correct_words');
     res.json({ result });
   } catch (err) {
     if (err instanceof TaskError) return res.status(400).json({ error: err.message });

@@ -9,7 +9,6 @@ import krcma from './screens/krcma.js';
 import arena from './screens/arena.js';
 import obchod from './screens/obchod.js';
 import slava from './screens/slava.js';
-import ukoly from './screens/ukoly.js';
 import cech from './screens/cech.js';
 import hospoda from './screens/hospoda.js';
 import slovnicek from './screens/slovnicek.js';
@@ -17,7 +16,7 @@ import vyprava from './screens/vyprava.js';
 import { connectChat, disconnectChat, onChat } from './chat.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, ukoly, cech, hospoda, slava };
+const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, cech, hospoda, slava };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
@@ -73,8 +72,8 @@ function setBadge(id, count) {
 function updateMenu(c) {
   document.getElementById('player-name').textContent = c ? `${c.avatar} ${c.name}` : '';
   document.getElementById('player-gold').textContent = c ? c.gold : '';
-  // Odznaky: nevyzvednuté denní odměny a pozvánky do cechu
-  setBadge('daily-badge', c?.dailyReady);
+  // Odznaky: nevyzvednuté odměny v krčmě (zakázky a denní úkoly) a pozvánky do cechu
+  setBadge('tavern-badge', c ? c.dailyReady + c.bountiesReady : 0);
   setBadge('guild-badge', c && !c.guild ? c.guildInvites : 0);
 }
 

@@ -216,6 +216,7 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
                ${r.levelsGained > 0 ? '<p class="level-up">🎉 Nová úroveň! Bardi už skládají písně (špatné).</p>' : ''}`
             : ''
         }
+        ${battle.bountiesDone.map((t) => `<p class="bounty-done">📜 Zakázka splněna: ${escapeHtml(t)} – odměna čeká v krčmě.</p>`).join('')}
         <div class="battle-end-actions">
           <button type="button" class="btn again-btn">⚔️ Další souboj tady</button>
           <button type="button" class="btn btn-secondary leave-btn">← Zpět na mapu</button>

@@ -89,12 +89,6 @@ function resolveOpponent(o, c) {
   };
 }
 
-function onQuest(characterId) {
-  return Boolean(
-    db.prepare('SELECT 1 FROM quests WHERE character_id = ? AND started_at IS NOT NULL').get(characterId)
-  );
-}
-
 // Posledních pár soubojů: útoky i obrany, vždy z pohledu hráče
 function history(c) {
   return db
@@ -135,7 +129,6 @@ function arenaState(c) {
     rank: rankOf(c.id),
     readyAt: c.arena_ready_at,
     serverNow: Date.now(),
-    onQuest: onQuest(c.id),
     opponents: getOpponents(c).map((o, index) => ({ index, ...resolveOpponent(o, c).view })),
     history: history(c),
   };
@@ -193,9 +186,6 @@ router.post('/fight', (req, res) => {
   const c = req.character;
   const now = Date.now();
 
-  if (onQuest(c.id)) {
-    return res.status(400).json({ error: 'Jsi na výpravě. Do arény můžeš, až se vrátíš.' });
-  }
   if (now < c.arena_ready_at) {
     return res.status(400).json({ error: 'Ještě si nevydechl z minulého souboje. Počkej, až vyprší odpočet.' });
   }

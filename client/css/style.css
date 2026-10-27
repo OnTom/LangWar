@@ -952,6 +952,16 @@ h3 small { color: #7a5a2a; }
 .flee-btn:disabled { opacity: 0.4; }
 .battle-log:empty { display: none; }
 
+/* Krčma: zakázky */
+.section-title { margin: 22px 0 8px; color: var(--accent); border-bottom: 2px solid var(--panel-dark); padding-bottom: 4px; }
+.bounty h3 { font-size: 1rem; }
+.bounty .daily-bar { margin-bottom: 10px; }
+.bounty.done { border-color: #3f7a2a; box-shadow: 0 0 8px rgba(63, 122, 42, 0.4); }
+.bounty-rewards { font-size: 1rem; gap: 10px; }
+.bounty-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.bounty-actions .btn { flex: 1; text-align: center; text-decoration: none; }
+.bounty-done { font-weight: bold; color: #2c561d; }
+
 /* Mapa výpravy */
 .world-map {
   position: relative;

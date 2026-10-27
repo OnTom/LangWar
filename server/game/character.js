@@ -4,7 +4,6 @@ import {
   ATTRIBUTES,
   ATTRIBUTE_KEYS,
   CLASSES,
-  THIRST_MAX,
   ENERGY_MAX,
   xpToNextLevel,
   upgradeCost,
@@ -18,6 +17,7 @@ import { SLOT_KEYS } from '../data/items.js';
 import { itemView, combatProfile, INVENTORY_SIZE } from './items.js';
 import { getItems } from './inventory.js';
 import { dailyReadyCount } from './daily.js';
+import { bountiesReady } from './bounties.js';
 import { membership, ROLE_NAMES } from './guild.js';
 
 const SELECT_CHARACTER = `SELECT c.*, u.username AS name FROM characters c JOIN users u ON u.id = c.user_id`;
@@ -45,14 +45,6 @@ export function rankOf(characterId) {
 // Dnešní datum (RRRR-MM-DD) v herním časovém pásmu
 export function today() {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: TIMEZONE }).format(new Date());
-}
-
-// Nový den = plná žízeň. Vrací postavu s aktuálními hodnotami.
-export function refreshThirst(c) {
-  const day = today();
-  if (c.thirst_day === day) return c;
-  db.prepare('UPDATE characters SET thirst = ?, thirst_day = ? WHERE id = ?').run(THIRST_MAX, day, c.id);
-  return { ...c, thirst: THIRST_MAX, thirst_day: day };
 }
 
 // Přičte XP a případně zvýší úroveň (i o víc úrovní najednou)
@@ -110,6 +102,7 @@ export function toView(c) {
     energy: c.energy_day === today() ? c.energy : ENERGY_MAX,
     energyMax: ENERGY_MAX,
     dailyReady: dailyReadyCount(c),
+    bountiesReady: bountiesReady(c.id),
     guild: guildSummary(c.id),
     guildInvites: db.prepare('SELECT COUNT(*) AS n FROM guild_invites WHERE character_id = ?').get(c.id).n,
     attributes,
