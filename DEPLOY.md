@@ -104,6 +104,12 @@ docker compose up -d --build
 ```
 
 Databáze je v Docker svazku `game-data`, takže nové nasazení ji nesmaže.
+Před větší aktualizací je dobré udělat zálohu (viz níže). Úpravy databáze (nové tabulky a sloupce)
+provede server sám při startu – hráči, postavy i předměty zůstanou.
+
+> **Aktualizace na verzi se souboji se slovíčky:** staré questy na čas a žízeň zmizely.
+> Rozběhnuté questy a jejich nevyzvednuté odměny se při prvním startu smažou,
+> denní úkol „strav minuty na výpravách“ se změní na úkol se slovíčky. Nic dalšího není potřeba.
 
 ### 5. Zálohy
 
@@ -165,6 +171,10 @@ Hra musí běžet jako **jedna instance** – chat posílá zprávy jen hráčů
 (a SQLite to stejně vyžaduje).
 
 ## Když něco nejde
+
+- **Při `npm start` se vypíše „Chybí nainstalované balíčky“ nebo `Cannot find package 'express'`** – ve složce hry
+  chybí `npm install` (ve Windows PowerShellu `npm.cmd install`). Je potřeba po prvním stažení a po aktualizaci,
+  která přidá balíčky.
 
 - **Server nenastartuje a v logu je „V produkci musí být nastavená proměnná JWT_SECRET“** – chybí nebo je krátký tajný klíč.
 - **Po nasazení zmizeli hráči** – databáze není na trvalém disku (zkontroluj Volume `/data`).

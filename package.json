@@ -5,7 +5,9 @@
   "main": "server/server.js",
   "type": "module",
   "scripts": {
+    "prestart": "node scripts/check-setup.js",
     "start": "node server/server.js",
+    "predev": "node scripts/check-setup.js",
     "dev": "node --watch server/server.js",
     "backup": "node server/backup.js",
     "restore": "node server/restore.js",

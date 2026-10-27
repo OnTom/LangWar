@@ -4,12 +4,23 @@ Webové fantasy RPG (parodie) ve stylu Shakes and Fidget.
 
 ## Spuštění
 
+Potřebuješ **Node.js 20 nebo novější** (https://nodejs.org, verze LTS).
+
 ```bash
-npm install
+npm install      # jen poprvé a když přibudou nové balíčky
 npm start        # nebo: npm run dev (automatický restart při změně)
 ```
 
 Pak otevři http://localhost:3000
+
+Ve Windows PowerShellu piš `npm.cmd` místo `npm` (např. `npm.cmd install`, `npm.cmd start`).
+Před spuštěním se automaticky zkontroluje verze Node.js a nainstalované balíčky (`scripts/check-setup.js`)
+a případně se vypíše, co udělat.
+
+**Aktualizace:** nejjednodušší je mít hru stáhnutou přes Git (`git clone https://github.com/OnTom/LangWar.git`)
+a novou verzi získat příkazem `git pull`, potom znovu `npm install`. Když hru stahuješ jako ZIP,
+rozbal novou verzi, spusť v ní `npm install` a přenes si soubor `langwar.db` ze staré složky,
+jinak začneš s prázdnou databází.
 
 **Automatické testy:** `npm test`
 
