@@ -816,6 +816,72 @@ h3 small { color: #7a5a2a; }
 .chat-system { font-style: italic; color: #6b3a1a; }
 .chat-tabs button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Jazykové úkoly */
+.task {
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.task-type { font-size: 0.9rem; color: #7a5a2a; font-weight: bold; }
+.task-prompt { font-size: 2rem; font-weight: bold; margin: 10px 0 14px; color: var(--ink); overflow-wrap: anywhere; }
+.task-timer { margin: 0 auto 14px; max-width: 360px; height: 18px; }
+.task-timer .bar-fill { background: #3f7a2a; transition: width 0.1s linear; }
+.task-timer .bar-fill.hurry { background: var(--accent); }
+.task-timer > span { line-height: 14px; font-size: 0.75rem; }
+.task-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.task-option { font-size: 1.1rem; }
+.task-form { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.task-form input {
+  flex: 1;
+  min-width: 180px;
+  max-width: 360px;
+  padding: 10px;
+  font: inherit;
+  font-size: 1.2rem;
+  border: 2px solid #b89d6c;
+  border-radius: 6px;
+  background: #fff;
+}
+.task-letters { flex-basis: 100%; display: flex; justify-content: center; gap: 4px; }
+.task-letter {
+  width: auto;
+  padding: 4px 12px;
+  color: var(--ink);
+  background: var(--panel-dark);
+  border-radius: 6px;
+  font-weight: bold;
+}
+.task-result { margin: 12px 0; padding: 10px; border-radius: 8px; font-size: 1.05rem; }
+.task-result.ok { background: rgba(63, 122, 42, 0.15); color: #2c561d; }
+.task-result.bad { background: rgba(168, 50, 30, 0.12); color: #7a2214; }
+.task-feedback { text-align: center; }
+
+/* Slovníček */
+.panel.lingo { max-width: 900px; }
+.lingo-bar { height: 20px; }
+.lingo-bar .bar-fill { background: #6a4bc4; }
+.lingo-bar > span { line-height: 16px; font-size: 0.8rem; }
+.lingo-total { margin-bottom: 8px; }
+.topic-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.topic-card {
+  background: #fffaf0;
+  border: 3px solid var(--panel-dark);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.topic-head { display: flex; align-items: center; gap: 8px; }
+.topic-head small { margin-left: auto; color: #7a5a2a; }
+.topic-icon { font-size: 1.6rem; }
+.topic-actions { display: flex; gap: 6px; }
+.practice-score { margin: 10px 0; font-size: 1.05rem; }
+.word-table tr.learned td { background: rgba(106, 75, 196, 0.08); }
+.back-btn { margin-bottom: 6px; }
+
 /* Mobil: menu nahoře */
 @media (max-width: 640px) {
   #app { flex-direction: column; }

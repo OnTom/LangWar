@@ -26,6 +26,8 @@ function limiter({ windowMinutes, limit, message, skipSuccessfulRequests = false
     limit,
     skipSuccessfulRequests,
     standardHeaders: 'draft-8',
+    // Automatické testy posílají spoustu požadavků z jedné adresy
+    skip: () => process.env.NODE_ENV === 'test',
     legacyHeaders: false,
     handler: (req, res) => res.status(429).json({ error: message }),
   });

@@ -12,10 +12,11 @@ import slava from './screens/slava.js';
 import ukoly from './screens/ukoly.js';
 import cech from './screens/cech.js';
 import hospoda from './screens/hospoda.js';
+import slovnicek from './screens/slovnicek.js';
 import { connectChat, disconnectChat, onChat } from './chat.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, arena, obchod, ukoly, cech, hospoda, slava };
+const screens = { profil, krcma, arena, obchod, slovnicek, ukoly, cech, hospoda, slava };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');

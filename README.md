@@ -11,6 +11,8 @@ npm start        # nebo: npm run dev (automatický restart při změně)
 
 Pak otevři http://localhost:3000
 
+**Automatické testy:** `npm test`
+
 **Nasazení na internet:** viz [DEPLOY.md](DEPLOY.md) (Railway nebo vlastní server s Dockerem a automatickým HTTPS).
 
 Záloha databáze: `npm run backup` (do složky `backups/`, drží se posledních 14),
@@ -88,6 +90,10 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | POST   | `/api/guild/donate`  | Přispět do pokladnice `{amount}`  |
 | POST   | `/api/guild/upgrade` | Koupit vylepšení `{upgrade: 'xp' \| 'gold'}` |
 | POST   | `/api/guild/motto`   | Změnit motto `{motto}` (vůdce)    |
+| GET    | `/api/lingo`         | Slovníček: jazyk, typy úkolů, témata a pokrok |
+| GET    | `/api/lingo/words?topic=…` | Slova tématu se statistikou |
+| POST   | `/api/lingo/task`    | Nový úkol na procvičení `{type, topic?}` |
+| POST   | `/api/lingo/answer`  | Odpověď na úkol `{taskId, answer}` |
 | GET    | `/api/chat?channel=global\|guild` | Posledních 50 zpráv  |
 | POST   | `/api/chat`          | Poslat zprávu `{channel, text}`   |
 | WS     | `/ws`                | Zprávy chatu v reálném čase (viz `server/ws.js`) |
@@ -137,6 +143,16 @@ Bojovníci se střídají v útocích (kdo začne, je náhoda):
 - Každý den 3 náhodné úkoly (výpravy, aréna, obchod, vylepšování…), odměna zlato + XP
 - Po vyzvednutí všech tří jde otevřít truhla s předmětem (vyšší šance na vzácnost)
 - Druhy úkolů jsou v `server/data/daily.js`, počítadla se volají přes `progressDaily()`
+
+### Slovíčka (čeština – němčina)
+
+- Slovní zásoba je v `server/data/words/de.js`: témata s úrovní, německá podstatná jména se členem,
+  české překlady oddělené `|` (první je hlavní, další jsou uznávaná synonyma)
+- Typy úkolů: **výběr** ze 4 možností (10 s), **překlad do češtiny** (15 s), **překlad do němčiny** (15 s)
+- Kontrola odpovědí: velikost písmen a interpunkce nevadí, synonyma se uznávají,
+  **diakritika a přehlásky musí být správně**; u podstatných jmen je člen nepovinný, ale napsaný musí sedět
+- Správnou odpověď zná jen server; každý úkol jde zodpovědět jednou a po vypršení času se nepočítá
+- Hra si pamatuje úspěšnost u každého slova a chybná slova dává častěji
 
 ### Cechy
 

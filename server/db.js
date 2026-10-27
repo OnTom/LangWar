@@ -147,6 +147,30 @@ db.exec(`
     created_at   INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS chat_channel ON chat_messages(channel, id);
+
+  -- Jazykové úkoly čekající na odpověď (správnou odpověď zná jen server)
+  CREATE TABLE IF NOT EXISTS lingo_tasks (
+    id           TEXT    PRIMARY KEY,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    word_id      TEXT    NOT NULL,
+    type         TEXT    NOT NULL,
+    context      TEXT    NOT NULL,
+    data         TEXT    NOT NULL,
+    created_at   INTEGER NOT NULL,
+    expires_at   INTEGER NOT NULL,
+    answered_at  INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS lingo_tasks_character ON lingo_tasks(character_id, created_at);
+
+  -- Jak hráči jdou jednotlivá slova (pro opakování chybných slov)
+  CREATE TABLE IF NOT EXISTS word_stats (
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    word_id      TEXT    NOT NULL,
+    correct      INTEGER NOT NULL DEFAULT 0,
+    wrong        INTEGER NOT NULL DEFAULT 0,
+    last_seen    INTEGER NOT NULL,
+    PRIMARY KEY (character_id, word_id)
+  );
 `);
 
 // Jednoduché migrace: doplní sloupce, které ve starší databázi chybí
