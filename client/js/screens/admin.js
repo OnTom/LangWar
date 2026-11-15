@@ -2,6 +2,8 @@ import { api } from '../api.js';
 import { setCharacter } from '../state.js';
 import { escapeHtml, timeAgo } from '../format.js';
 
+const KIND_NAMES = { attack: 'Útok', heal: 'Léčení', defense: 'Obrana', control: 'Kontrola', buff: 'Posílení' };
+
 // Administrace pro testování hry. Server pustí jen adminy, tady jde hlavně o pohodlné ovládání.
 export default function admin(el) {
   let data = null;
@@ -109,7 +111,23 @@ export default function admin(el) {
 
           <section class="admin-box">
             <h3>📖 Kouzla a knihovna</h3>
-            <p class="hint">Přibude spolu s knihovnou: naučit kouzlo bez zkoušky, odemknout všechny lekce.</p>
+            <form data-form="library" class="admin-row">
+              <input type="hidden" name="action" value="learn">
+              <label>Lekce <select name="lesson">${data.lessons
+                .filter((l) => l.ready)
+                .map((l) => `<option value="${l.key}">${l.order}. ${escapeHtml(l.name)}</option>`)
+                .join('')}</select></label>
+              <button class="btn btn-small" ${dis}>Naučit bez zkoušky</button>
+            </form>
+            <div class="admin-row">
+              <button type="button" class="btn btn-small" data-post="library" data-body='{"action":"learn-all"}' ${dis}>Naučit všechny hotové</button>
+              <button type="button" class="btn btn-small btn-secondary" data-post="library" data-body='{"action":"forget"}' ${dis}>Zapomenout vše</button>
+            </div>
+            <p class="hint">Umí: ${
+              Object.entries(data.spellRanks)
+                .map(([kind, rank]) => `${KIND_NAMES[kind]} ${'I'.repeat(rank)}`)
+                .join(', ') || 'zatím nic'
+            }</p>
           </section>
 
           <section class="admin-box danger">

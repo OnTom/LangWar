@@ -20,6 +20,7 @@ export const GRAMMAR_FORMATS = {
 };
 
 const GRACE_MS = 2000;
+const UNTIMED_MS = 60 * 60 * 1000; // „bez časového limitu“ (zkouška v knihovně) = hodina
 const TASK_TTL_MS = 60 * 60 * 1000;
 const RECENT_ITEMS = 3; // tolik posledních položek se hned neopakuje
 
@@ -90,6 +91,7 @@ function publicTask(row) {
     options: data.options ?? null,
     tiles: data.tiles ?? null,
     timeLimit: GRAMMAR_FORMATS[data.format].timeLimit,
+    untimed: Boolean(data.untimed),
     expiresAt: row.expires_at,
     serverNow: Date.now(),
   };
@@ -110,7 +112,10 @@ function adminSolution(exercise) {
  * topics = z jakých témat brát podstatná jména (zbytek slovní zásoby, když je jich málo),
  * context = k čemu úkol patří ('grammar' pro procvičování, 'battle:12' pro souboj).
  */
-export function createGrammarTask(characterId, { lesson: lessonKey, format = null, topics = null, context = 'grammar' }) {
+export function createGrammarTask(
+  characterId,
+  { lesson: lessonKey, format = null, topics = null, context = 'grammar', untimed = false }
+) {
   const lesson = getLesson(lessonKey);
   if (!lesson?.ready) throw new TaskError('Tahle lekce zatím nemá cvičení.');
   if (format && !lesson.formats.includes(format)) throw new TaskError('Takové cvičení tahle lekce nemá.');
@@ -130,7 +135,7 @@ export function createGrammarTask(characterId, { lesson: lessonKey, format = nul
   db.prepare('DELETE FROM lingo_tasks WHERE created_at < ?').run(now - TASK_TTL_MS);
   db.prepare('DELETE FROM lingo_tasks WHERE character_id = ? AND context = ? AND answered_at IS NULL').run(characterId, context);
 
-  const data = { lesson: lesson.key, format: chosen, ...exercise, adminSolution: adminSolution(exercise) };
+  const data = { lesson: lesson.key, format: chosen, untimed, ...exercise, adminSolution: adminSolution(exercise) };
   const id = crypto.randomBytes(12).toString('hex');
   db.prepare(
     `INSERT INTO lingo_tasks (id, character_id, word_id, type, context, data, created_at, expires_at)
@@ -143,9 +148,18 @@ export function createGrammarTask(characterId, { lesson: lessonKey, format = nul
     context,
     JSON.stringify(data),
     now,
-    now + GRAMMAR_FORMATS[chosen].timeLimit * 1000
+    now + (untimed ? UNTIMED_MS : GRAMMAR_FORMATS[chosen].timeLimit * 1000)
   );
   return publicTask(db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(id));
+}
+
+/** Nezodpovězené gramatické cvičení (po obnovení stránky): { task, expired } nebo null. */
+export function openGrammarTask(characterId, taskId) {
+  const row = db
+    .prepare('SELECT * FROM lingo_tasks WHERE id = ? AND character_id = ? AND answered_at IS NULL')
+    .get(String(taskId), characterId);
+  if (!row || !row.type.startsWith('g_')) return null;
+  return { task: publicTask(row), expired: Date.now() > row.expires_at + GRACE_MS };
 }
 
 // Kontrola odpovědi podle formátu; velikost písmen i diakritika musí sedět

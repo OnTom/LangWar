@@ -51,13 +51,18 @@ export function renderTask(el, task, { onAnswer }) {
       }</div>
       <div class="task-prompt ${task.grammar ? 'task-sentence' : ''}">${escapeHtml(task.prompt)}</div>
       ${task.hint ? `<div class="task-hint">${escapeHtml(task.hint)}</div>` : ''}
-      <div class="bar task-timer"><div class="bar-fill" style="width: 100%"></div><span></span></div>
+      ${
+        task.untimed
+          ? '<div class="task-untimed">⏳ Bez časového limitu – v klidu si to rozmysli.</div>'
+          : '<div class="bar task-timer"><div class="bar-fill" style="width: 100%"></div><span></span></div>'
+      }
       ${task.adminSolution ? `<div class="task-admin">🛠️ Odpověď: <strong>${escapeHtml(task.adminSolution)}</strong></div>` : ''}
       ${answerArea}
     </div>`;
 
   const fill = el.querySelector('.task-timer .bar-fill');
   const label = el.querySelector('.task-timer span');
+  const untimed = Boolean(task.untimed);
 
   function finish(answer) {
     if (done) return;
@@ -68,6 +73,7 @@ export function renderTask(el, task, { onAnswer }) {
   }
 
   function tick() {
+    if (untimed) return;
     const left = task.expiresAt - (Date.now() + clockOffset);
     fill.style.width = `${Math.max(0, (left / total) * 100)}%`;
     fill.classList.toggle('hurry', left < 4000);

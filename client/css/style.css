@@ -854,7 +854,6 @@ h3 small { color: #7a5a2a; }
   font-weight: bold;
 }
 .task-sentence { font-size: 1.5rem; }
-.topic-card.not-ready { opacity: 0.6; }
 .task-hint { margin: -8px 0 12px; font-size: 0.95rem; font-style: italic; color: #6b5a45; }
 .task-rule { margin-top: 6px; font-size: 0.95rem; color: var(--ink); }
 .task-order { display: flex; flex-direction: column; gap: 10px; align-items: center; }
@@ -982,6 +981,35 @@ h3 small { color: #7a5a2a; }
 .admin-log { list-style: none; padding: 0; font-size: 0.9rem; }
 .admin-log li { padding: 3px 0; border-bottom: 1px dashed var(--panel-dark); }
 .task-admin { margin: -6px 0 10px; font-size: 0.9rem; color: #6a4bc4; }
+
+/* Prázdná chybová hláška nezabírá místo */
+.error:empty { margin: 0; }
+
+/* Knihovna */
+.task-untimed { margin: 0 0 14px; font-size: 0.9rem; color: #3f7a2a; font-weight: bold; }
+.spell-list, .book-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.spell-card, .book-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; background: #fffaf0; border: 2px solid var(--panel-dark); border-radius: 8px;
+}
+.spell-card.equipped { border-color: #6a4bc4; box-shadow: 0 0 8px rgba(106, 75, 196, 0.35); }
+.spell-card .btn { align-self: flex-start; }
+.spell-name { font-weight: bold; color: #6a4bc4; }
+.spell-effect { font-size: 0.95rem; }
+.book-head { font-size: 1.02rem; }
+.book-order { color: var(--accent); font-weight: bold; }
+.book-summary { margin: 0; font-size: 0.9rem; font-style: italic; }
+.book-state { font-size: 0.88rem; font-weight: bold; color: #6b5a45; }
+.book-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.book-learned { border-color: #3f7a2a; }
+.book-bought { border-color: var(--rarity-legendary); }
+.book-level, .book-previous, .book-soon { opacity: 0.65; }
+.exam-banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; margin-bottom: 8px; border: 2px solid var(--rarity-legendary); border-radius: 8px; background: #fff3dc; }
+.lesson-spell { padding: 8px 10px; margin-bottom: 10px; border-radius: 8px; background: rgba(106, 75, 196, 0.1); }
+.lesson-table { margin: 12px 0; }
+.lesson-examples li, .lesson-tips li { margin: 4px 0; }
+.exam-end { text-align: center; margin-top: 10px; }
+.exam-end .btn { margin: 4px; }
 
 /* Krčma: zakázky */
 .section-title { margin: 22px 0 8px; color: var(--accent); border-bottom: 2px solid var(--panel-dark); padding-bottom: 4px; }

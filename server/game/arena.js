@@ -2,7 +2,7 @@
 // podle jejich atributů a výbavy) a NPC gladiátorům. Vítěz bere čest a zlato.
 import db from '../db.js';
 import { QUEST_TIME_SCALE } from '../config.js';
-import LOCATIONS from '../data/locations.js';
+import { unlockedTopics } from '../data/locations.js';
 import GLADIATORS from '../data/arena.js';
 import {
   CLASSES,
@@ -128,12 +128,6 @@ export function arenaState(c) {
   };
 }
 
-// Slovíčka v aréně: ze všech témat lokací, které má hrdina odemčené
-function arenaTopics(c) {
-  const topics = LOCATIONS.filter((l) => l.level <= c.level).flatMap((l) => l.topics);
-  return [...new Set(topics)];
-}
-
 /** Vyzve soupeře ze seznamu – začne tahový souboj. Čekací doba běží od začátku souboje. */
 export function startArenaBattle(c, index) {
   const now = Date.now();
@@ -150,7 +144,7 @@ export function startArenaBattle(c, index) {
   const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, opponent.profile());
   state.kind = 'arena';
   state.location = { key: 'arena', name: 'Aréna', icon: '🏟️' };
-  state.topics = arenaTopics(c);
+  state.topics = unlockedTopics(c.level); // slovíčka ze všech odemčených lokací
   state.opponent = { ...chosen, name: opponent.view.name, avatar: opponent.view.avatar };
 
   return db.transaction(() => {

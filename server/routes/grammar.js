@@ -3,14 +3,15 @@ import { requireAuth } from '../middleware/auth.js';
 import { findCharacter } from '../game/character.js';
 import { TaskError } from '../game/lingo.js';
 import { createGrammarTask, answerGrammarTask, grammarOverview, GRAMMAR_FORMATS } from '../game/grammar.js';
+import { isLearned } from '../game/library.js';
+import { unlockedTopics } from '../data/locations.js';
 import { isAdmin, withSolution } from '../game/admin.js';
 
-// Procvičování gramatiky. Zatím jen pro správce (náhled); hráčům ji otevře knihovna.
+// Procvičování gramatiky: hráč jen naučené lekce (v knihovně), správce všechny hotové
 const router = Router();
 router.use(requireAuth);
 
 router.use((req, res, next) => {
-  if (!isAdmin(req.user.id)) return res.status(403).json({ error: 'Gramatika se otevře spolu s knihovnou.' });
   const c = findCharacter(req.user.id);
   if (!c) return res.status(404).json({ error: 'Nejdřív si vytvoř postavu.' });
   req.character = c;
@@ -38,7 +39,15 @@ router.post(
   '/task',
   handle((req, res) => {
     const { lesson, format } = req.body || {};
-    const task = createGrammarTask(req.character.id, { lesson: String(lesson ?? ''), format: format || null });
+    const key = String(lesson ?? '');
+    if (!isAdmin(req.user.id) && !isLearned(req.character.id, key)) {
+      return res.status(403).json({ error: 'Tuhle lekci se nejdřív nauč v knihovně.' });
+    }
+    const task = createGrammarTask(req.character.id, {
+      lesson: key,
+      format: format || null,
+      topics: unlockedTopics(req.character.level),
+    });
     res.json({ task: withSolution(req.user.id, task) });
   })
 );

@@ -2,7 +2,7 @@
 // level = od jaké úrovně postavy se lokace odemkne (nepřátelé mají aspoň tuto úroveň).
 // x, y = poloha na mapě v procentech. Pořadí určuje cestu na mapě.
 // Třída nepřítele: warrior (vykrývá), scout (uhýbá), mage (kouzlí).
-export default [
+const LOCATIONS = [
   {
     key: 'chalupa',
     name: 'Babiččina chalupa',
@@ -180,3 +180,10 @@ export default [
     boss: { name: 'Král Pýcha', icon: '👑', cls: 'warrior' },
   },
 ];
+
+export default LOCATIONS;
+
+// Témata slovíček ze všech lokací, které má postava dané úrovně odemčené
+export function unlockedTopics(level) {
+  return [...new Set(LOCATIONS.filter((l) => l.level <= level).flatMap((l) => l.topics))];
+}

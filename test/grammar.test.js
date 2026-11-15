@@ -73,9 +73,11 @@ test('každý generátor dává platná cvičení ve všech formátech', () => {
   }
 });
 
-test('hráč bez práv správce gramatiku zatím nevidí', async () => {
-  assert.equal((await api.get(player, '/grammar')).status, 403);
-  assert.equal((await api.post(player, '/grammar/task', { lesson: 'artikel' })).status, 403);
+test('hráč procvičuje jen lekce naučené v knihovně', async () => {
+  assert.equal((await api.get(player, '/grammar')).status, 200);
+  const r = await api.post(player, '/grammar/task', { lesson: 'artikel' });
+  assert.equal(r.status, 403);
+  assert.match(r.body.error, /knihovně/);
 });
 
 async function grammarTask(body) {

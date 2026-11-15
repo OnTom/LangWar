@@ -10,6 +10,8 @@ import LOCATIONS from '../data/locations.js';
 import { membership } from '../game/guild.js';
 import { currentEnergy } from '../game/expedition.js';
 import { isAdmin, showsAnswers, logAction, recentLog } from '../game/admin.js';
+import { LESSONS } from '../game/grammar.js';
+import { adminLearn, adminLearnAll, adminForgetAll, spellRanks, LibraryError } from '../game/library.js';
 
 // Administrace pro testování: úroveň, zlato, energie, předměty, souboje…
 // Dostupná jen pro adminy; každá akce se zapíše do admin_log.
@@ -56,6 +58,8 @@ function state(req) {
       return { key: l.key, name: l.name, icon: l.icon, level: l.level, wins: p?.wins ?? 0, bossCharge: p?.boss_charge ?? 0 };
     }),
     bossWinsRequired: BOSS_WINS_REQUIRED,
+    lessons: LESSONS.map((l) => ({ key: l.key, order: l.order, name: l.name, ready: l.ready })),
+    spellRanks: c ? spellRanks(c.id) : {},
     log: recentLog(),
   };
 }
@@ -68,7 +72,7 @@ function action(name, fn) {
       logAction(req.user.id, name, details);
       res.json({ ...state(req), message: `Hotovo: ${name}${details ? ` (${details})` : ''}` });
     } catch (err) {
-      if (err instanceof AdminError) return res.status(400).json({ error: err.message });
+      if (err instanceof AdminError || err instanceof LibraryError) return res.status(400).json({ error: err.message });
       throw err;
     }
   };
@@ -220,6 +224,25 @@ router.post(
       if (row.task_id) db.prepare('DELETE FROM lingo_tasks WHERE id = ?').run(row.task_id);
       db.prepare('DELETE FROM battles WHERE id = ?').run(row.id);
       return 'ukončen bez následků';
+    }
+    throw new AdminError('Neznámá akce.');
+  })
+);
+
+// POST /api/admin/library  { action: 'learn', lesson } | { action: 'learn-all' } | { action: 'forget' }
+router.post(
+  '/library',
+  action('knihovna', (req) => {
+    const c = needCharacter(req);
+    const what = req.body?.action;
+    if (what === 'learn') {
+      const spell = adminLearn(c, String(req.body?.lesson ?? ''));
+      return `naučeno: ${spell.icon} ${spell.name} ${spell.rankName}`;
+    }
+    if (what === 'learn-all') return `naučeny všechny hotové lekce (${adminLearnAll(c)})`;
+    if (what === 'forget') {
+      adminForgetAll(c);
+      return 'zapomenuty všechny lekce a kouzla';
     }
     throw new AdminError('Neznámá akce.');
   })

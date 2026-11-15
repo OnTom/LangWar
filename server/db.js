@@ -183,6 +183,28 @@ db.exec(`
     PRIMARY KEY (character_id, lesson, item)
   );
 
+  -- Knihovna: koupené a naučené lekce gramatiky (learned_at = složená zkouška)
+  CREATE TABLE IF NOT EXISTS character_lessons (
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    lesson       TEXT    NOT NULL,
+    bought_at    INTEGER NOT NULL,
+    learned_at   INTEGER,
+    PRIMARY KEY (character_id, lesson)
+  );
+
+  -- Zkoušky v knihovně (5 otázek bez časového limitu, na složení 4 správně)
+  CREATE TABLE IF NOT EXISTS library_exams (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    lesson       TEXT    NOT NULL,
+    asked        INTEGER NOT NULL DEFAULT 0,
+    correct      INTEGER NOT NULL DEFAULT 0,
+    task_id      TEXT,
+    status       TEXT    NOT NULL DEFAULT 'active', -- active | passed | failed
+    created_at   INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS library_exams_character ON library_exams(character_id, status);
+
   -- Tahové souboje řízené hráčem. state = JSON se stavem obou bojovníků a záznamem.
   CREATE TABLE IF NOT EXISTS battles (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,6 +277,7 @@ addColumn('characters', 'energy', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'energy_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'map_location', "TEXT NOT NULL DEFAULT 'chalupa'");
 addColumn('users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('characters', 'spell_slots', "TEXT NOT NULL DEFAULT '[]'"); // nasazená kouzla (druhy), nejvýš 4
 addColumn('users', 'admin_show_answers', 'INTEGER NOT NULL DEFAULT 0');
 
 // Staré questy na čas (a žízeň) nahradily zakázky: rozpracované questy i jejich odměny zmizí,

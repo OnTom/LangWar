@@ -54,6 +54,7 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 
 Správce hry vidí v menu **🛠️ Admin**: nastavení úrovně, zlata, energie a atributů, předměty
 libovolné rarity, okamžitý boss, splnění zakázek a denních úkolů, zkrácení souboje, aréna bez čekání,
+naučení lekcí bez zkoušky (jedné nebo všech hotových) a zapomenutí všech kouzel,
 režim „ukazovat správné odpovědi“ a smazání postavy. Každá akce se zapíše do záznamu.
 
 Kdo je správce:
@@ -122,8 +123,14 @@ Ve Windows PowerShellu `npm.cmd run admin -- Tomas`. Na serveru jde místo toho 
 | GET    | `/api/lingo/words?topic=…` | Slova tématu se statistikou |
 | POST   | `/api/lingo/task`    | Nový úkol na procvičení `{type, topic?}` |
 | POST   | `/api/lingo/answer`  | Odpověď na úkol `{taskId, answer}` |
-| GET    | `/api/grammar`       | Lekce gramatiky a postup (zatím jen správce) |
-| POST   | `/api/grammar/task`  | Gramatické cvičení `{lesson, format?}` |
+| GET    | `/api/library`       | Knihovna: lekce se stavem a cenou, kniha kouzel, rozpracovaná zkouška |
+| GET    | `/api/library/lesson/:key` | Text koupené lekce |
+| POST   | `/api/library/buy`   | Koupit knihu `{lesson}` |
+| POST   | `/api/library/exam/start` | Začít (nebo obnovit) zkoušku `{lesson}` |
+| POST   | `/api/library/exam/answer` | Odpověď ve zkoušce `{answer}` |
+| POST   | `/api/library/slots` | Nasazená kouzla `{kinds: ['attack', …]}` (nejvýš 4) |
+| GET    | `/api/grammar`       | Lekce gramatiky a postup |
+| POST   | `/api/grammar/task`  | Cvičení z naučené lekce `{lesson, format?}` (správce z každé hotové) |
 | POST   | `/api/grammar/answer` | Odpověď `{taskId, answer}` – index, text, nebo pořadí kartiček |
 | GET    | `/api/battle`        | Probíhající tahový souboj (nebo `null`) a energie |
 | GET    | `/api/battle/map`    | Mapa Výpravy: lokace, odemčení, nepřátelé, postup a boss |
@@ -132,7 +139,7 @@ Ve Windows PowerShellu `npm.cmd run admin -- Tomas`. Na serveru jde místo toho 
 | POST   | `/api/battle/answer` | Odpověď na úkol útoku `{answer}` → průběh kola |
 | POST   | `/api/battle/flee`   | Utéct ze souboje (bez odměny)     |
 | GET    | `/api/admin`         | Administrace (jen správce): stav postavy, lokace, záznam akcí |
-| POST   | `/api/admin/level`, `/gold`, `/energy`, `/attributes`, `/item`, `/boss`, `/bounties`, `/daily`, `/battle`, `/arena-ready`, `/answers`, `/reset-character` | Akce správce |
+| POST   | `/api/admin/level`, `/gold`, `/energy`, `/attributes`, `/item`, `/boss`, `/bounties`, `/daily`, `/battle`, `/arena-ready`, `/library`, `/answers`, `/reset-character` | Akce správce |
 | GET    | `/api/chat?channel=global\|guild` | Posledních 50 zpráv  |
 | POST   | `/api/chat`          | Poslat zprávu `{channel, text}`   |
 | WS     | `/ws`                | Zprávy chatu v reálném čase (viz `server/ws.js`) |
@@ -234,19 +241,25 @@ Krčma slouží jen k vydávání úkolů, bojuje se na Výpravě (`server/game/
 - Správnou odpověď zná jen server; každý úkol jde zodpovědět jednou a po vypršení času se nepočítá
 - Hra si pamatuje úspěšnost u každého slova a chybná slova dává častěji
 
-### Gramatika (připravuje se pro kouzla)
+### Knihovna a gramatika
 
 Návrh kouzel a učebního plánu je v [docs/kouzla.md](docs/kouzla.md).
 
-- Učební plán němčiny (15 lekcí) a data pro cvičení: `server/data/grammar/de.js`
-  (pořadí lekcí, kouzlo, které lekce odemyká, množná čísla podstatných jmen, pravidelná slovesa)
-- Generátory cvičení: `server/game/grammar/de.js`; zatím mají cvičení první lekce:
-  člen der/die/das, přítomný čas, zápor nicht/kein, akuzativ, množné číslo
-- Formáty: **výběr z možností** (15 s), **doplnění** (25 s), **skládání věty z kartiček** (30 s)
-- Cvičení se skládají ze slovíček hry; velikost písmen, diakritika i přehlásky musí sedět
+- **Knihovna** (`server/game/library.js`, menu 📖 Knihovna): lekce gramatiky jdou v pořadí učebního plánu, odemykají se úrovní
+  a složením předchozí lekce. Knihu hráč koupí za zlato (zhruba 10 výher na úrovni lekce), přečte si ji
+  (úvod, tabulka, příklady, tipy) a složí **zkoušku**: 5 otázek bez časového limitu, na složení 4 správně;
+  po druhé chybě zkouška končí, opakování je zdarma
+- Složená lekce = kouzlo nebo jeho vyšší stupeň; **kniha kouzel** má 4 sloty (nové kouzlo se samo nasadí, když je místo).
+  Naučené lekce jde dál procvičovat
+- **Kouzla** (`server/data/spells.js`): 5 druhů (útok, léčení, obrana, kontrola, posílení) ve 3 stupních
+  s absolutní silou; každé povolání má vlastní kouzla (např. mág Ohnivá koule, lovec Otrávený šíp)
+- Učební plán němčiny (15 lekcí) a data pro cvičení: `server/data/grammar/de.js`; texty lekcí:
+  `server/data/grammar/de-lessons.js`; generátory cvičení: `server/game/grammar/de.js`.
+  Hotové jsou lekce 1–5: člen der/die/das, přítomný čas, zápor nicht/kein, akuzativ, množné číslo
+- Formáty cvičení: **výběr z možností** (15 s), **doplnění** (25 s), **skládání věty z kartiček** (30 s)
+- Cvičení se skládají ze slovíček z odemčených lokací; velikost písmen, diakritika i přehlásky musí sedět
 - Po chybě hráč uvidí správnou větu a krátké pravidlo; chybné položky se opakují častěji (`grammar_stats`)
-- Engine (`server/game/grammar.js`) je společný pro všechny jazyky – nový jazyk = vlastní data a generátory
-- Zatím jen náhled pro správce ve Slovníčku; hráčům gramatiku otevře knihovna
+- Engine (`server/game/grammar.js`) je společný pro všechny jazyky – nový jazyk = vlastní data, texty a generátory
 
 ### Cechy
 

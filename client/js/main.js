@@ -14,10 +14,11 @@ import hospoda from './screens/hospoda.js';
 import slovnicek from './screens/slovnicek.js';
 import vyprava from './screens/vyprava.js';
 import admin from './screens/admin.js';
+import knihovna from './screens/knihovna.js';
 import { connectChat, disconnectChat, onChat } from './chat.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, cech, hospoda, slava, admin };
+const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, knihovna, cech, hospoda, slava, admin };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
