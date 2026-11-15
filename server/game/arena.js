@@ -17,6 +17,7 @@ import { findCharacter, findCharacterById, characterCombatProfile, rankOf, today
 import { progressDaily } from './daily.js';
 import { createMonster } from './monsters.js';
 import { createBattle } from './battle.js';
+import { battleSpells } from './library.js';
 
 const HISTORY_SIZE = 10;
 
@@ -145,6 +146,7 @@ export function startArenaBattle(c, index) {
   state.kind = 'arena';
   state.location = { key: 'arena', name: 'Aréna', icon: '🏟️' };
   state.topics = unlockedTopics(c.level); // slovíčka ze všech odemčených lokací
+  state.spells = battleSpells(c);
   state.opponent = { ...chosen, name: opponent.view.name, avatar: opponent.view.avatar };
 
   return db.transaction(() => {

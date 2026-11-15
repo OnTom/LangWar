@@ -72,6 +72,15 @@ export function equippedSpells(c) {
   return readSlots(c).filter((kind) => ranks[kind]);
 }
 
+/** Nasazená kouzla připravená do souboje (snímek na začátku souboje). */
+export function battleSpells(c) {
+  const ranks = spellRanks(c.id);
+  return equippedSpells(c).map((kind) => {
+    const lesson = spellLesson(kind, ranks[kind]);
+    return { key: `spell:${kind}`, ...spellInfo(c.class, kind, ranks[kind]), lesson: lesson.key, lessonName: lesson.name };
+  });
+}
+
 function saveSlots(characterId, slots) {
   db.prepare('UPDATE characters SET spell_slots = ? WHERE id = ?').run(JSON.stringify(slots), characterId);
 }

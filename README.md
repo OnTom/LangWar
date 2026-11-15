@@ -171,8 +171,11 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
   - 🪓 **Těžký útok**: psaný překlad (15 s), síla ×1
 - Pak útočí nepřítel; hrdinova obrana (štít válečníka, úhyb lovce) i zbroj platí.
   Nepřítel s manou občas sešle kouzlo, kterému se nedá uhnout.
-- Kouzla s gramatikou z knihovny se připravují, viz [docs/kouzla.md](docs/kouzla.md);
-  **mana** (30 + Inteligence, každé kolo +3) je pro ně připravená
+- ✨ **Kouzla** z knihovny (nejvýš 4 nasazená): hráč zaplatí manu a splní cvičení z gramatiky kouzla
+  (výběr 15 s, doplnění 25 s, skládání věty 30 s). Správně = účinek, chyba = kouzlo selže a vrátí se 20 % many.
+  Účinky mají pevnou sílu podle stupně: zásah (mág; válečníkovi ho nesníží zbroj; lovec část poškození jedem
+  ve dvou dalších kolech), léčení, štít pohlcující poškození, omráčení (nepřítel vynechá tah) a posílení dalších zásahů.
+  **Mana** = 30 + Inteligence, každé kolo +3. Podrobnosti v [docs/kouzla.md](docs/kouzla.md)
 - **Měřítko soubojů** roste s úrovní zhruba lineárně, aby kouzla s pevnou silou dávala smysl:
   běžný hrdina má ~100 životů na 1. úrovni, ~200 na 15. a ~300 na 30. a těžkým útokem dá ~16 / ~30 / ~45.
   Atributy a výbava se porovnají s běžnou postavou stejné úrovně a čísla posunou (nejvýš 0,6–1,8×),

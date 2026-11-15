@@ -14,7 +14,9 @@ import {
   battleReward,
 } from './rules.js';
 import { TASK_TYPES, TOPICS, TaskError, createTask, answerTask, openTask } from './lingo.js';
-import { createBattle, actionError, playRound } from './battle.js';
+import { createBattle, actionError, payForAction, playRound, spellOf } from './battle.js';
+import { createGrammarTask, answerGrammarTask, openGrammarTask } from './grammar.js';
+import { battleSpells } from './library.js';
 import { createMonster } from './monsters.js';
 import { findCharacter, characterCombatProfile, addXp, today } from './character.js';
 import { generateItem, itemView } from './items.js';
@@ -66,7 +68,18 @@ function save(row, state, fields = {}) {
   return next;
 }
 
-const PUBLIC_FIGHTER = ['name', 'avatar', 'class', 'level', 'hp', 'maxHp', 'mana', 'maxMana', 'boss'];
+const PUBLIC_FIGHTER = [
+  'name', 'avatar', 'class', 'level', 'hp', 'maxHp', 'mana', 'maxMana', 'boss',
+  'shield', 'empower', 'stunned', 'poison', // stavy z kouzel
+];
+
+const isSpell = (action) => Boolean(action?.startsWith('spell:'));
+
+// Rozpracovaný úkol: kouzla mají gramatické cvičení, útoky slovíčka
+function openBattleTask(row) {
+  if (!row.task_id) return null;
+  return isSpell(row.pending_action) ? openGrammarTask(row.character_id, row.task_id) : openTask(row.character_id, row.task_id);
+}
 
 function publicFighter(f) {
   return Object.fromEntries(PUBLIC_FIGHTER.map((k) => [k, f[k]]));
@@ -76,7 +89,7 @@ function publicFighter(f) {
 export function battleView(row) {
   if (!row) return null;
   const state = JSON.parse(row.state);
-  const pending = row.task_id ? openTask(row.character_id, row.task_id) : null;
+  const pending = openBattleTask(row);
   return {
     id: row.id,
     status: row.status,
@@ -93,6 +106,17 @@ export function battleView(row) {
       taskName: a.taskName,
       timeLimit: TASK_TYPES[a.tasks[0]].timeLimit,
       available: true,
+    })),
+    spells: (state.spells ?? []).map((sp) => ({
+      key: sp.key,
+      kind: sp.kind,
+      name: sp.name,
+      icon: sp.icon,
+      rankName: sp.rankName,
+      mana: sp.mana,
+      effect: sp.effect,
+      lessonName: sp.lessonName,
+      available: state.hero.mana >= sp.mana,
     })),
     pendingAction: row.pending_action,
     task: pending && !pending.expired ? pending.task : null,
@@ -187,6 +211,7 @@ export function startBattle(c, { location: key, enemy } = {}) {
     const monster = createMonster({ name: template.name, icon: template.icon, cls: template.cls, level });
     const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, monster, { boss });
     state.location = { key: location.key, name: location.name, icon: location.icon };
+    state.spells = battleSpells(c);
     state.enemyIndex = boss ? 'boss' : location.monsters.indexOf(template);
     state.topics = location.topics;
     const id = db
@@ -197,7 +222,7 @@ export function startBattle(c, { location: key, enemy } = {}) {
   return start();
 }
 
-/** Hráč zvolil útok: zaplatí manu a dostane úkol. Rozpracovaný úkol nejde vyměnit. */
+/** Hráč zvolil útok nebo kouzlo (zaplatí manu) a dostane úkol. Rozpracovaný úkol nejde vyměnit. */
 export function chooseAction(c, action) {
   const row = resolveExpired(c);
   if (!row) throw new BattleError('Teď nebojuješ.', 404);
@@ -207,6 +232,13 @@ export function chooseAction(c, action) {
   const state = JSON.parse(row.state);
   const error = actionError(state, action);
   if (error) throw new BattleError(error);
+  const spell = spellOf(state, action);
+  if (spell) {
+    // Kouzlo: mana se platí hned, cvičení je z gramatiky kouzla
+    payForAction(state, action);
+    const task = createGrammarTask(c.id, { lesson: spell.lesson, topics: state.topics, context: `battle:${row.id}` });
+    return save(row, state, { pending_action: action, task_id: task.id });
+  }
   // Směr překladu se střídá náhodně (do češtiny i do cizího jazyka)
   const types = BATTLE_ACTIONS[action].tasks;
   const type = types[Math.floor(Math.random() * types.length)];
@@ -218,8 +250,10 @@ export function chooseAction(c, action) {
 function playTurn(c, row, answer) {
   const state = JSON.parse(row.state);
   let result;
+  const spell = isSpell(row.pending_action);
   try {
-    result = answerTask(c.id, row.task_id, answer, { context: `battle:${row.id}` });
+    const answerFn = spell ? answerGrammarTask : answerTask;
+    result = answerFn(c.id, row.task_id, answer, { context: `battle:${row.id}` });
   } catch (err) {
     if (!(err instanceof TaskError)) throw err;
     // Úkol mezitím zmizel (např. byl smazán jako starý) – počítá se jako netrefa
@@ -229,7 +263,7 @@ function playTurn(c, row, answer) {
   const bounties = [];
   if (result.correct) {
     progressDaily(c.id, 'correct_words');
-    if (row.pending_action === 'spell') bounties.push(...progressBounties(c.id, { type: 'spell' }));
+    if (spell) bounties.push(...progressBounties(c.id, { type: 'spell' }));
   } else {
     state.mistakes = (state.mistakes ?? 0) + 1;
   }
@@ -268,7 +302,7 @@ export function answerAction(c, answer) {
 export function resolveExpired(c) {
   const row = findActive(c.id);
   if (!row?.pending_action) return row;
-  const open = openTask(c.id, row.task_id);
+  const open = openBattleTask(row);
   if (open && !open.expired) return row;
   return db.transaction(() => playTurn(c, row, null))().row;
 }

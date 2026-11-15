@@ -13,6 +13,7 @@ import { generateItem, itemView } from './items.js';
 import { insertItem, inventoryFree } from './inventory.js';
 import { guildBonus, applyBonus } from './guild.js';
 import { progressDaily } from './daily.js';
+import { spellRanks } from './library.js';
 
 function randomInt(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
@@ -30,7 +31,7 @@ const LOCATION_BY_KEY = new Map(LOCATIONS.map((l) => [l.key, l]));
 const KINDS = {
   defeat: { weight: 4, size: [2, 3], value: 0.8, location: true },
   wins: { weight: 3, size: [3, 5], value: 0.6, location: true },
-  spell: { weight: 0, size: [3, 5], value: 0.5, location: false }, // vrátí se s kouzly z knihovny
+  spell: { weight: 2, size: [3, 5], value: 0.5, location: false, needsSpells: true },
   flawless: { weight: 2, size: [1, 2], value: 1.2, location: false },
   boss: { weight: 1, size: [1, 1], value: BOSS_WINS_REQUIRED * 0.6 + 2, location: true },
 };
@@ -48,7 +49,7 @@ function describe(b) {
     case 'boss':
       return `Poraz bosse ${l.boss.icon} ${l.boss.name} (${l.name})`;
     case 'spell':
-      return `Zasáhni nepřítele ${b.target}× kouzlem`;
+      return `Úspěšně sešli ${b.target} ${b.target < 5 ? 'kouzla' : 'kouzel'} v souboji`;
     default:
       return b.target === 1 ? 'Vyhraj souboj bez jediné chyby' : `Vyhraj ${b.target} souboje bez jediné chyby`;
   }
@@ -66,7 +67,11 @@ const FLAVOR = {
 function generate(c, slot, avoid = new Set()) {
   const unlocked = LOCATIONS.filter((l) => l.level <= c.level);
   const recent = unlocked.slice(-3);
-  const kinds = Object.entries(KINDS).filter(([key, k]) => k.weight > 0 && !avoid.has(key));
+  // Zakázky na kouzla dostane jen ten, kdo nějaké kouzlo umí
+  const knowsSpells = Object.keys(spellRanks(c.id)).length > 0;
+  const kinds = Object.entries(KINDS).filter(
+    ([key, k]) => k.weight > 0 && !avoid.has(key) && (!k.needsSpells || knowsSpells)
+  );
   const total = kinds.reduce((s, [, k]) => s + k.weight, 0);
   let roll = Math.random() * total;
   const [kind, def] = kinds.find(([, k]) => (roll -= k.weight) <= 0) ?? kinds[0];

@@ -16,6 +16,9 @@ export const RANK_NAMES = ['', 'I', 'II', 'III'];
 // Cena many podle stupně
 export const SPELL_MANA = { 1: 15, 2: 25, 3: 40 };
 
+// Když cvičení nevyjde, kouzlo selže a vrátí se jen tahle část many
+export const SPELL_FAIL_REFUND = 0.2;
+
 // Síla podle druhu a stupně: [min, max]
 export const SPELL_POWER = {
   attack: { 1: [30, 36], 2: [60, 70], 3: [100, 115] },

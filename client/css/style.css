@@ -956,6 +956,16 @@ h3 small { color: #7a5a2a; }
 .battle-action { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; }
 .battle-action small { font-weight: normal; font-size: 0.78rem; opacity: 0.9; }
 .battle-action-icon { font-size: 1.8rem; }
+.battle-spells { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.battle-spell { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; background: #6a4bc4; border-color: #4a3290; }
+.battle-spell:hover { background: #7d5ed8; }
+.battle-spell small { font-weight: normal; font-size: 0.75rem; opacity: 0.9; }
+.battle-status { display: flex; flex-wrap: wrap; gap: 4px; min-height: 4px; }
+.battle-bars-enemy .battle-status { justify-content: flex-end; }
+.status-chip { font-size: 0.75rem; font-weight: bold; padding: 1px 6px; border-radius: 8px; background: #fffaf0; border: 1px solid var(--panel-dark); }
+.battle-float.heal { color: #2c7a1d; }
+.battle-float.spell { color: #6a4bc4; font-size: 1.7rem; }
+.battle-float.poison { color: #3f7a2a; }
 .battle-task-head { text-align: center; font-weight: bold; color: var(--accent); margin-bottom: 4px; }
 .battle-feedback { text-align: center; min-height: 8px; }
 .battle-end { text-align: center; }

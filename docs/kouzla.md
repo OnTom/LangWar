@@ -73,6 +73,18 @@ Jedna řada lekcí; lekce se odemyká úrovní a další jde koupit až po slož
 Pro srovnání (měřítko soubojů, běžná postava): životy hrdiny ~100 / ~200 / ~300
 a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 
+## Účinky v souboji (jak jsou naprogramované)
+
+- **Útok:** mág – zásah (zbroj nepřítele ho sníží jako obvykle); válečník – zásah, který zbroj nesníží;
+  lovec – polovina poškození hned, zbytek (o 20 % víc) jedem na konci tohoto a příštího kola.
+- **Léčení:** doplní životy (nejvýš do maxima).
+- **Obrana:** štít pohlcuje poškození z dalších útoků nepřítele, dokud se nevyčerpá.
+- **Kontrola:** nepřítel vynechá tah v tomtéž kole; stupeň II a III přidá poškození.
+- **Posílení:** bonus k dalším zásahům hrdiny (útoky i útočná kouzla); netrefa ho nespotřebuje.
+- Léčení, obrana, kontrola a posílení mají u všech povolání stejný účinek, liší se názvem a popisem.
+- Mana se platí hned při volbě kouzla, takže cvičení nejde „přehodit“. Zakázka v krčmě „Úspěšně sešli N kouzel“
+  se nabízí jen tomu, kdo nějaké kouzlo umí.
+
 ## Mana a selhání
 
 - Mana = 30 + Inteligence, každé kolo se doplní 3 body.
@@ -110,7 +122,7 @@ a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 1. ✅ Nové měřítko soubojů, útoky oběma směry, velká písmena
 2. ✅ Gramatický engine: učební plán po jazycích, generátory cvičení (zatím lekce 1–5), kontrola, sledování chyb
 3. ✅ Knihovna: lekce, nákup za zlato, zkouška, kniha kouzel se 4 sloty
-4. Kouzla v boji: účinky, mana, selhání
+4. ✅ Kouzla v boji: účinky, mana, selhání
 5. Kouzlící nepřátelé a aréna
 6. Obsah prvních 5 lekcí, testy, vyvážení
 
