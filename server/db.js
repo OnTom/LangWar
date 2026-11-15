@@ -252,6 +252,10 @@ db.exec(`
   DELETE FROM items WHERE location = 'quest';
   DELETE FROM quests;
   UPDATE daily_tasks SET task_key = 'correct_words' WHERE task_key = 'thirst';
+  -- Samostatné „Kouzlo“ zmizelo (kouzla přijdou s knihovnou), nesplněné zakázky na kouzla propadnou
+  DELETE FROM bounties WHERE kind = 'spell' AND progress < target;
+  -- Rozehrané souboje ve starém měřítku (před verzí 2) se ukončí
+  DELETE FROM battles WHERE status = 'active' AND json_extract(state, '$.v') IS NULL;
 `);
 db.exec('CREATE INDEX IF NOT EXISTS characters_honor ON characters(honor)');
 

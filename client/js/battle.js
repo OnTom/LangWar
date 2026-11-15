@@ -17,7 +17,7 @@ function barsHtml(side, f) {
 }
 
 function describe(e, battle) {
-  const action = battle.actions.find((a) => a.key === e.action);
+  const action = battle.actions.find((a) => a.key === e.action) ?? { name: 'Útok', icon: '⚔️' };
   if (e.actor === 'hero') {
     if (e.type === 'miss') return `❌ ${action.name}: vedle – slovo nevyšlo.`;
     if (e.type === 'crit') return `💥 ${action.name}: kritický zásah za ${e.damage}!`;
@@ -121,7 +121,7 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
             <span class="battle-action-icon">${a.icon}</span>
             <strong>${escapeHtml(a.name)}</strong>
             <small>${escapeHtml(a.taskName)} · ${a.timeLimit} s</small>
-            <small>${a.mana ? `💧 ${a.mana} many` : 'zdarma'} · síla ×${a.power}</small>
+            <small>🇩🇪 ⇄ 🇨🇿 · síla ×${a.power}</small>
           </button>`
           )
           .join('')}

@@ -5,12 +5,19 @@ import {
   BATTLE_ACTIONS,
   BATTLE_HERO_HITS,
   BATTLE_ENEMY_HITS,
-  BATTLE_STRENGTH_LIMIT,
+  BATTLE_CLASS,
+  BATTLE_FACTOR_MIN,
+  BATTLE_FACTOR_MAX,
+  BATTLE_DAMAGE_SPREAD,
   BOSS_HP,
   BOSS_DAMAGE,
   BATTLE_CRIT_MULTIPLIER,
   ENEMY_SPELL_POWER,
+  ENEMY_SPELL_COST,
   MANA_REGEN,
+  beginnerDamageScale,
+  parHp,
+  parHit,
   maxHp,
   maxMana,
   damageRange,
@@ -18,6 +25,7 @@ import {
   blockChance,
   armorReduction,
 } from './rules.js';
+import { parProfile } from './monsters.js';
 
 function randomInt(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
@@ -27,57 +35,62 @@ function chance(percent) {
   return Math.random() * 100 < percent;
 }
 
+const average = (range) => (range.min + range.max) / 2;
+const clampFactor = (x) => Math.min(BATTLE_FACTOR_MAX, Math.max(BATTLE_FACTOR_MIN, x));
+
+/**
+ * Bojové hodnoty v měřítku soubojů. Atributy a výbava se porovnají s průměrným bojovníkem
+ * stejné třídy a úrovně a posunou průměrné životy a poškození (odmocnina tlumí extrémy).
+ * side = 'hero' (hráč) nebo 'enemy' (monstrum, soupeř v aréně) – každá strana má své měřítko:
+ * nepřítel vydrží BATTLE_HERO_HITS zásahů hrdiny, hrdina BATTLE_ENEMY_HITS zásahů nepřítele.
+ */
+export function battleStats(f, side = 'hero', opponentLevel = f.level) {
+  const par = parProfile(f.class, f.level, Boolean(f.monster));
+  const hpFactor = clampFactor(Math.sqrt(maxHp(f) / maxHp(par)));
+  const damageFactor = clampFactor(Math.sqrt(average(damageRange(f)) / average(damageRange(par))));
+  const cls = BATTLE_CLASS[f.class];
+  const hp = side === 'hero' ? parHp(f.level) : BATTLE_HERO_HITS * parHit(f.level);
+  const hit = side === 'hero' ? parHit(f.level) : parHp(f.level) / BATTLE_ENEMY_HITS;
+  const averageHit = hit * cls.damage * damageFactor;
+  return {
+    maxHp: Math.max(1, Math.round(hp * cls.hp * hpFactor)),
+    damage: {
+      min: Math.max(1, Math.round(averageHit * (1 - BATTLE_DAMAGE_SPREAD))),
+      max: Math.max(1, Math.round(averageHit * (1 + BATTLE_DAMAGE_SPREAD))),
+    },
+    maxMana: maxMana(f),
+    crit: critChance(f, opponentLevel),
+    block: blockChance(f),
+    evade: CLASSES[f.class].evadeChance,
+    armorReduction: armorReduction(f, opponentLevel),
+  };
+}
+
 // Bojovník do tahového souboje (profil postavy nebo monstra proti danému soupeři)
-function fighter(f, opponent) {
-  const hp = maxHp(f);
-  const mana = maxMana(f);
+function fighter(f, opponent, side) {
+  const stats = battleStats(f, side, opponent.level);
   return {
     name: f.name,
     avatar: f.avatar,
     class: f.class,
     level: f.level,
-    hp,
-    maxHp: hp,
-    mana,
-    maxMana: mana,
-    damage: damageRange(f),
-    crit: critChance(f, opponent.level),
-    block: blockChance(f),
-    evade: CLASSES[f.class].evadeChance,
-    armorReduction: armorReduction(f, opponent.level),
+    hp: stats.maxHp,
+    mana: stats.maxMana,
+    ...stats,
   };
 }
 
-// Průměrné poškození útoku po započtení zbroje, kritických zásahů a obrany
-function averageHit(att, def, { dodge = true } = {}) {
-  const roll = (att.damage.min + att.damage.max) / 2;
-  const crit = 1 + (att.crit / 100) * (BATTLE_CRIT_MULTIPLIER - 1);
-  const defense = dodge ? (1 - def.evade / 100) * (1 - def.block / 100) : 1;
-  return roll * crit * (1 - def.armorReduction / 100) * defense;
-}
-
-/**
- * Nový souboj: hero = bojový profil postavy, monster = profil monstra.
- * Životy a poškození nepřítele se přepočítají tak, aby souboj trval pár kol,
- * ale síla obou stran (atributy, výbava, úroveň) pořád rozhodovala.
- */
+/** Nový souboj: hero = bojový profil postavy, monster = profil monstra nebo soupeře v aréně. */
 export function createBattle(hero, monster, { boss = false } = {}) {
-  const h = fighter(hero, monster);
-  const e = fighter(monster, hero);
-
-  // Kolik útoků by každá strana potřebovala podle běžných pravidel
-  const heroHit = averageHit(h, e, { dodge: false }); // správná odpověď vždy zasáhne
-  const enemyHit = averageHit(e, h);
-  const ratio = e.maxHp / heroHit / (h.maxHp / enemyHit); // < 1 = hrdina je silnější
-  const strength = Math.min(BATTLE_STRENGTH_LIMIT, Math.max(1 / BATTLE_STRENGTH_LIMIT, Math.sqrt(ratio)));
-
-  e.maxHp = e.hp = Math.max(1, Math.round(BATTLE_HERO_HITS * strength * heroHit * (boss ? BOSS_HP : 1)));
-  const damageScale = (h.maxHp / (BATTLE_ENEMY_HITS / strength) / enemyHit) * (boss ? BOSS_DAMAGE : 1);
+  const h = fighter(hero, monster, 'hero');
+  const e = fighter(monster, hero, 'enemy');
+  if (boss) e.maxHp = e.hp = Math.round(e.maxHp * BOSS_HP);
+  const damageScale = (boss ? BOSS_DAMAGE : 1) * beginnerDamageScale(h.level);
   e.damage = {
     min: Math.max(1, Math.round(e.damage.min * damageScale)),
     max: Math.max(1, Math.round(e.damage.max * damageScale)),
   };
-  return { hero: h, enemy: { ...e, boss }, turn: 1, log: [] };
+  return { v: 2, hero: h, enemy: { ...e, boss }, turn: 1, log: [] };
 }
 
 function rollDamage(att, def, power) {
@@ -91,13 +104,7 @@ function rollDamage(att, def, power) {
 /** Může hrdina použít útok? Vrací text chyby, nebo null. */
 export function actionError(state, action) {
   if (!Object.hasOwn(BATTLE_ACTIONS, action)) return 'Takový útok neznáme.';
-  if (state.hero.mana < BATTLE_ACTIONS[action].mana) return 'Na kouzlo ti chybí mana.';
   return null;
-}
-
-/** Zaplatí manu za útok (hned při volbě, aby se úkol nedal „přehodit“ zdarma). */
-export function payForAction(state, action) {
-  state.hero.mana -= BATTLE_ACTIONS[action].mana;
 }
 
 // Útok hrdiny po vyhodnocení úkolu. Správná odpověď vždy zasáhne.
@@ -113,7 +120,7 @@ function heroAttack(state, action, correct) {
 // Tah nepřítele: když má manu, občas sešle kouzlo (nedá se mu uhnout ani ho vykrýt)
 function enemyAttack(state) {
   const { hero, enemy } = state;
-  const cost = BATTLE_ACTIONS.spell.mana;
+  const cost = ENEMY_SPELL_COST;
   const spell = enemy.mana >= cost && chance(CLASSES[enemy.class].unblockable ? 60 : 30);
   const entry = { turn: state.turn, actor: 'enemy', action: spell ? 'spell' : 'attack' };
   if (spell) {

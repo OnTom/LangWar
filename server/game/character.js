@@ -7,9 +7,6 @@ import {
   ENERGY_MAX,
   xpToNextLevel,
   upgradeCost,
-  maxHp,
-  damageRange,
-  critChance,
   blockChance,
   armorReduction,
 } from './rules.js';
@@ -19,6 +16,7 @@ import { getItems } from './inventory.js';
 import { dailyReadyCount } from './daily.js';
 import { bountiesReady } from './bounties.js';
 import { isAdmin } from './admin.js';
+import { battleStats } from './battle.js';
 import { membership, ROLE_NAMES } from './guild.js';
 
 const SELECT_CHARACTER = `SELECT c.*, u.username AS name FROM characters c JOIN users u ON u.id = c.user_id`;
@@ -73,6 +71,7 @@ function guildSummary(characterId) {
 export function toView(c) {
   const equippedRows = getItems(c.id, 'equipped');
   const profile = combatProfile(c, equippedRows);
+  const battle = battleStats(profile, 'hero');
   const cls = CLASSES[c.class];
 
   const attributes = {};
@@ -109,9 +108,11 @@ export function toView(c) {
     guildInvites: db.prepare('SELECT COUNT(*) AS n FROM guild_invites WHERE character_id = ?').get(c.id).n,
     attributes,
     stats: {
-      hp: maxHp(profile),
-      damage: damageRange(profile),
-      critChance: critChance(profile),
+      // Hodnoty v měřítku soubojů (proti nepříteli stejné úrovně)
+      hp: battle.maxHp,
+      damage: battle.damage,
+      mana: battle.maxMana,
+      critChance: battle.crit,
       armor: profile.armor,
       armorReduction: armorReduction(profile),
       maxArmorReduction: cls.maxArmorReduction,

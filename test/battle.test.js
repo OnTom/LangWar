@@ -14,7 +14,7 @@ after(() => api.close());
 function answerFor(taskId, correct = true) {
   const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(taskId);
   const word = getWord(row.word_id);
-  if (row.type === 'choice') {
+  if (row.type.startsWith('choice')) {
     const options = JSON.parse(row.data).options;
     return options.findIndex((o) => (o.wordId === word.id) === correct);
   }
@@ -61,7 +61,7 @@ test('zvolený útok dá úkol, který nejde vyměnit za jiný', async () => {
   const token = await api.player('Vymenovac', 'mage');
   await api.post(token, '/battle/start', { location: 'chalupa' });
   const first = await api.post(token, '/battle/action', { action: 'heavy' });
-  assert.equal(first.body.battle.task.type, 'translate');
+  assert.ok(['translate', 'reverse'].includes(first.body.battle.task.type));
   assert.equal(first.body.battle.pendingAction, 'heavy');
 
   const second = await api.post(token, '/battle/action', { action: 'light' });
@@ -91,18 +91,27 @@ test('správná odpověď zasáhne, špatná mine; pak útočí nepřítel', asy
   assert.ok(hit.body.battle.enemy.hp < enemyHp);
 });
 
-test('kouzlo stojí manu a bez many nejde', async () => {
-  const token = await api.player('Kouzelnik', 'warrior');
-  const start = await api.post(token, '/battle/start', { location: 'chalupa' });
-  const mana = start.body.battle.hero.mana;
+test('útoky střídají směr překladu a samostatné kouzlo už není', async () => {
+  const token = await api.player('Prekladatel', 'warrior');
+  const id = db.prepare("SELECT c.id FROM characters c JOIN users u ON u.id = c.user_id WHERE u.username = 'Prekladatel'").get().id;
+  await api.post(token, '/battle/start', { location: 'chalupa' });
+  const seen = { light: new Set(), heavy: new Set() };
+  for (let i = 0; i < 24; i++) {
+    const action = i % 2 ? 'light' : 'heavy';
+    // Nepřítel ani hrdina během zkoušky nepadnou
+    const row = db.prepare("SELECT * FROM battles WHERE character_id = ? AND status = 'active'").get(id);
+    const state = JSON.parse(row.state);
+    state.enemy.hp = state.enemy.maxHp = 10_000;
+    state.hero.hp = state.hero.maxHp = 10_000;
+    db.prepare('UPDATE battles SET state = ? WHERE id = ?').run(JSON.stringify(state), row.id);
+    const chosen = await api.post(token, '/battle/action', { action });
+    seen[action].add(chosen.body.battle.task.type);
+    await api.post(token, '/battle/answer', { answer: answerFor(chosen.body.battle.task.id, false) });
+  }
+  assert.deepEqual([...seen.light].sort(), ['choice', 'choice_reverse']);
+  assert.deepEqual([...seen.heavy].sort(), ['reverse', 'translate']);
   const spell = await api.post(token, '/battle/action', { action: 'spell' });
-  assert.equal(spell.body.battle.task.type, 'reverse');
-  assert.equal(spell.body.battle.hero.mana, mana - 10);
-  await api.post(token, '/battle/answer', { answer: 'nesmysl' });
-
-  const again = await api.post(token, '/battle/action', { action: 'spell' });
-  assert.equal(again.status, 400, 'válečník s 11 manou má jen na jedno kouzlo');
-  assert.match(again.body.error, /mana/);
+  assert.equal(spell.status, 400);
 });
 
 test('vítězství přinese odměnu, souboj pak skončí', async () => {

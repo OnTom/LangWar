@@ -6,9 +6,10 @@ import VOCAB from '../data/words/de.js';
 
 export const LANGUAGE = { code: VOCAB.language, name: VOCAB.languageName };
 
-// Typy úkolů: výběr z možností, překlad do češtiny, překlad do cizího jazyka
+// Typy úkolů: výběr z možností (oběma směry), překlad do češtiny, překlad do cizího jazyka
 export const TASK_TYPES = {
   choice: { name: 'Vyber překlad', timeLimit: 10, from: 'de', to: 'cz' },
+  choice_reverse: { name: 'Vyber překlad', timeLimit: 10, from: 'cz', to: 'de' },
   translate: { name: 'Přelož do češtiny', timeLimit: 15, from: 'de', to: 'cz' },
   reverse: { name: 'Přelož do němčiny', timeLimit: 15, from: 'cz', to: 'de' },
 };
@@ -48,14 +49,18 @@ export function getWord(id) {
 
 // --- Kontrola odpovědí --------------------------------------------------------
 
-// Sjednocení zápisu: malá písmena, jedna mezera, bez interpunkce na okrajích.
-// Diakritiku (háčky, čárky, přehlásky, ß) NEODSTRAŇUJEME – musí být správně.
-export function normalize(text) {
+// Sjednocení zápisu: jedna mezera, bez interpunkce na okrajích.
+// Velikost písmen ani diakritiku (háčky, čárky, přehlásky, ß) NEMĚNÍME – musí být správně.
+export function clean(text) {
   return String(text ?? '')
-    .toLocaleLowerCase('cs')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^[\s.,!?;:"'„“‚‘()-]+|[\s.,!?;:"'„“‚‘()-]+$/g, '');
+}
+
+// Pro porovnávání slov mezi sebou (stejný význam apod.), kde na velikosti písmen nezáleží
+export function normalize(text) {
+  return clean(text).toLocaleLowerCase('cs');
 }
 
 function splitArticle(de) {
@@ -63,20 +68,24 @@ function splitArticle(de) {
   return ARTICLES.includes(first.toLowerCase()) ? { article: first, noun: rest.join(' ') } : { article: null, noun: de };
 }
 
-// Překlad do češtiny: stačí kterékoli uznávané synonymum
+// Překlad do češtiny: stačí kterékoli uznávané synonymum, velikost písmen musí sedět
 export function checkCzech(word, input) {
-  const answer = normalize(input);
-  return word.cz.some((form) => normalize(form) === answer);
+  const answer = clean(input);
+  return word.cz.some((form) => clean(form) === answer);
 }
 
-// Překlad do němčiny: u podstatných jmen projde i bez členu, ale napsaný člen musí sedět.
+// Překlad do němčiny: velikost písmen musí sedět (podstatná jména velkým písmenem).
+// U podstatných jmen projde i bez členu, ale napsaný člen musí sedět; na začátku smí být
+// velkým písmenem jako na začátku věty („Der Hund“).
 // Zadání může mít víc správných slov (např. „měsíc“ = der Mond i der Monat).
 export function checkGerman(words, input) {
-  const answer = normalize(input);
+  const answer = splitArticle(clean(input));
   return words.some((w) => {
-    if (normalize(w.de) === answer) return true;
-    const { article, noun } = splitArticle(w.de);
-    return article !== null && normalize(noun) === answer;
+    const expected = splitArticle(w.de);
+    if (answer.noun !== expected.noun) return false;
+    if (answer.article === null) return true;
+    const capitalized = expected.article && expected.article[0].toUpperCase() + expected.article.slice(1);
+    return expected.article !== null && (answer.article === expected.article || answer.article === capitalized);
   });
 }
 
@@ -136,15 +145,20 @@ function shuffle(arr) {
   return a;
 }
 
-// Možnosti pro výběr: správný překlad + 3 jiná slova ze stejného tématu
-function choiceOptions(word) {
+// Možnosti pro výběr: správný překlad + 3 jiná slova ze stejného tématu.
+// Vynechá slova se stejným významem nebo zápisem, aby správná byla jen jedna možnost.
+// toForeign = možnosti v cizím jazyce (zadání je české slovo).
+function choiceOptions(word, toForeign = false) {
   const taken = new Set(word.cz.map(normalize));
-  const distinct = (w) => w.id !== word.id && !w.cz.some((f) => taken.has(normalize(f)));
+  const distinct = (w) =>
+    w.id !== word.id && normalize(w.de) !== normalize(word.de) && !w.cz.some((f) => taken.has(normalize(f)));
   let candidates = WORDS.filter((w) => w.topic === word.topic && distinct(w));
   if (candidates.length < CHOICE_OPTIONS - 1) candidates = WORDS.filter(distinct);
   const others = shuffle(candidates).slice(0, CHOICE_OPTIONS - 1);
-  return shuffle([word, ...others]).map((w) => ({ wordId: w.id, text: w.display }));
+  return shuffle([word, ...others]).map((w) => ({ wordId: w.id, text: toForeign ? w.de : w.display }));
 }
+
+const isChoice = (type) => type === 'choice' || type === 'choice_reverse';
 
 // --- Úkoly ------------------------------------------------------------------------
 
@@ -182,7 +196,7 @@ export function createTask(characterId, { type, topics = null, context = 'practi
 
   const word = pickWord(characterId, topics);
   const data = { prompt: TASK_TYPES[type].from === 'de' ? word.de : word.display };
-  if (type === 'choice') data.options = choiceOptions(word);
+  if (isChoice(type)) data.options = choiceOptions(word, type === 'choice_reverse');
 
   const id = crypto.randomBytes(12).toString('hex');
   db.prepare(
@@ -211,7 +225,7 @@ export function taskSolution(taskId) {
   if (!row) return null;
   const word = getWord(row.word_id);
   const data = JSON.parse(row.data);
-  if (row.type === 'choice') {
+  if (isChoice(row.type)) {
     const index = data.options.findIndex((o) => o.wordId === word.id);
     return `${index + 1}. ${data.options[index].text}`;
   }
@@ -255,10 +269,10 @@ export function answerTask(characterId, taskId, answer, { context = null } = {})
 
   let correct = false;
   let expected;
-  if (row.type === 'choice') {
+  if (isChoice(row.type)) {
     const index = Number(answer);
     correct = !noAnswer && Number.isInteger(index) && data.options[index]?.wordId === word.id;
-    expected = word.display;
+    expected = row.type === 'choice' ? word.display : word.de;
   } else if (row.type === 'translate') {
     correct = checkCzech(word, answer);
     expected = word.cz.filter((f, i, all) => all.indexOf(f) === i).slice(0, 3).join(', ');

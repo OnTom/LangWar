@@ -15,7 +15,7 @@ export function renderTask(el, task, { onAnswer }) {
   let done = false;
 
   const answerArea =
-    task.type === 'choice'
+    task.options
       ? `<div class="task-options">
           ${task.options
             .map((o, i) => `<button type="button" class="btn task-option" data-index="${i}">${escapeHtml(o)}</button>`)
@@ -83,7 +83,7 @@ export function renderTask(el, task, { onAnswer }) {
 
   // Klávesy 1–4 pro výběr z možností
   function onKey(e) {
-    if (task.type === 'choice' && /^[1-4]$/.test(e.key)) finish(Number(e.key) - 1);
+    if (task.options && /^[1-4]$/.test(e.key)) finish(Number(e.key) - 1);
   }
   document.addEventListener('keydown', onKey);
 

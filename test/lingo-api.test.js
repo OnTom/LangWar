@@ -47,13 +47,32 @@ test('psaný překlad do češtiny i do němčiny', async () => {
   const t1 = await api.post(token, '/lingo/task', { type: 'translate', topic: 'jidlo' });
   const w1 = db.prepare('SELECT word_id FROM lingo_tasks WHERE id = ?').get(t1.body.task.id).word_id;
   const { getWord } = await import('../server/game/lingo.js');
-  const r1 = await api.post(token, '/lingo/answer', { taskId: t1.body.task.id, answer: getWord(w1).display.toUpperCase() });
+  const r1 = await api.post(token, '/lingo/answer', { taskId: t1.body.task.id, answer: `  ${getWord(w1).display}!` });
   assert.equal(r1.body.result.correct, true);
 
   const t2 = await api.post(token, '/lingo/task', { type: 'reverse', topic: 'jidlo' });
   const w2 = getWord(db.prepare('SELECT word_id FROM lingo_tasks WHERE id = ?').get(t2.body.task.id).word_id);
   const r2 = await api.post(token, '/lingo/answer', { taskId: t2.body.task.id, answer: w2.de });
   assert.equal(r2.body.result.correct, true);
+
+  const t3 = await api.post(token, '/lingo/task', { type: 'translate', topic: 'jidlo' });
+  const w3 = db.prepare('SELECT word_id FROM lingo_tasks WHERE id = ?').get(t3.body.task.id).word_id;
+  const r3 = await api.post(token, '/lingo/answer', { taskId: t3.body.task.id, answer: getWord(w3).display.toUpperCase() });
+  assert.equal(r3.body.result.correct, false, 'velikost písmen musí sedět');
+});
+
+test('výběr z možností opačným směrem: české slovo, německé možnosti', async () => {
+  const { body } = await api.post(token, '/lingo/task', { type: 'choice_reverse', topic: 'zvirata' });
+  assert.equal(body.task.from, 'cz');
+  assert.equal(body.task.options.length, 4);
+  const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(body.task.id);
+  const { getWord } = await import('../server/game/lingo.js');
+  const word = getWord(row.word_id);
+  assert.equal(body.task.prompt, word.display);
+  assert.ok(body.task.options.includes(word.de), 'mezi možnostmi je německé slovo se členem');
+  const right = JSON.parse(row.data).options.findIndex((o) => o.wordId === row.word_id);
+  const r = await api.post(token, '/lingo/answer', { taskId: body.task.id, answer: right });
+  assert.equal(r.body.result.correct, true);
 });
 
 test('po vypršení času se odpověď nepočítá', async () => {

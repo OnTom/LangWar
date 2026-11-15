@@ -144,28 +144,60 @@ export function monsterGear(cls, level) {
 // Denní energie: každý souboj na výpravě stojí 1 bod
 export const ENERGY_MAX = 50;
 
-// Útoky hráče. Každý útok = jazykový úkol; zásah jen při správné odpovědi.
-// power násobí hod poškození, mana = cena.
+// Základní útoky hráče. Každý útok = jazykový úkol se slovíčkem; zásah jen při správné odpovědi.
+// tasks = typy úkolů, ze kterých se náhodně vybírá (střídá se překlad do češtiny a do cizího jazyka),
+// power násobí hod poškození. Kouzla (s gramatikou) přibudou samostatně.
 export const BATTLE_ACTIONS = {
-  light: { name: 'Lehký útok', icon: '🗡️', task: 'choice', power: 0.6, mana: 0 },
-  heavy: { name: 'Těžký útok', icon: '🪓', task: 'translate', power: 1, mana: 0 },
-  spell: { name: 'Kouzlo', icon: '✨', task: 'reverse', power: 1.5, mana: 10 },
+  light: { name: 'Lehký útok', icon: '🗡️', taskName: 'Vyber překlad', tasks: ['choice', 'choice_reverse'], power: 0.7 },
+  heavy: { name: 'Těžký útok', icon: '🪓', taskName: 'Napiš překlad', tasks: ['translate', 'reverse'], power: 1 },
 };
 
-// Mana: základ + 2 body za každý bod Inteligence; každé kolo se trochu doplní
-export function maxMana(f) {
-  return 5 + f.intelligence * 2;
-}
-export const MANA_REGEN = 2;
+// --- Měřítko soubojů ------------------------------------------------------------
+// Čísla v souboji rostou s úrovní zhruba lineárně, aby kouzla s pevnou (absolutní) silou
+// dávala smysl: léčení za 25–30 životů je na začátku čtvrtina životů, později méně.
+// Atributy, výbava a povolání čísla posouvají nahoru či dolů (viz battleStats v battle.js).
 
-// Ladění délky souboje (cíl: zhruba 3–6 kol). Při vyrovnaných silách hrdina potřebuje
-// BATTLE_HERO_HITS těžkých zásahů a nepřítel BATTLE_ENEMY_HITS zásahů. Silnější strana
-// (atributy, výbava, úroveň) potřebuje zásahů méně, slabší víc – nejvýš o polovinu.
-export const BATTLE_HERO_HITS = 5;
-export const BATTLE_ENEMY_HITS = 6.5;
-export const BATTLE_STRENGTH_LIMIT = 1.5;
+// Životy hrdiny průměrné postavy dané úrovně
+export function parHp(level) {
+  return 100 + 7 * (level - 1);
+}
+
+// Průměrný těžký zásah hrdiny průměrné postavy dané úrovně
+export function parHit(level) {
+  return 16 + (level - 1);
+}
+
+// Nepřítel vydrží zhruba tolik průměrných těžkých zásahů hrdiny…
+export const BATTLE_HERO_HITS = 3.5;
+// …a hrdina vydrží zhruba tolik průměrných zásahů nepřítele (před zbrojí a obranou)
+export const BATTLE_ENEMY_HITS = 8;
+
+// Povolání v souboji: válečník víc vydrží, mág víc bije
+export const BATTLE_CLASS = {
+  warrior: { hp: 1.15, damage: 0.95 },
+  mage: { hp: 0.85, damage: 1.15 },
+  scout: { hp: 1, damage: 1 },
+};
+
+// O kolik můžou atributy a výbava posunout životy a poškození proti průměru (násobek)
+export const BATTLE_FACTOR_MIN = 0.6;
+export const BATTLE_FACTOR_MAX = 1.8;
+export const BATTLE_DAMAGE_SPREAD = 0.2; // zásah je náhodně ±20 % kolem průměru
+
+// Ochrana začátečníků: nepřátelé bijí hrdinu na 1. úrovni slaběji, od 5. úrovně naplno
+export function beginnerDamageScale(heroLevel) {
+  return Math.min(1, 0.7 + 0.075 * (heroLevel - 1));
+}
+
+// Mana: základ + 1 bod za každý bod Inteligence; každé kolo se trochu doplní
+export function maxMana(f) {
+  return 30 + f.intelligence;
+}
+export const MANA_REGEN = 3;
+
 export const BATTLE_CRIT_MULTIPLIER = 1.5;
 export const ENEMY_SPELL_POWER = 1.4; // kouzlo nepřítele: silnější a nedá se vykrýt ani mu uhnout
+export const ENEMY_SPELL_COST = 15;
 export const BATTLE_ITEM_CHANCE = 10; // % vítězství, za která padne předmět
 
 // Boss lokace: objeví se po několika výhrách v lokaci, je silnější a dá větší odměnu i jistý předmět

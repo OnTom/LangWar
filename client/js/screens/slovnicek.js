@@ -2,6 +2,8 @@ import { api } from '../api.js';
 import { escapeHtml } from '../format.js';
 import { renderTask, resultHtml } from '../lingo.js';
 
+const FLAGS = { de: '🇩🇪', cz: '🇨🇿' };
+
 // Slovníček: témata, pokrok a procvičování slovíček (bez odměn)
 export default function slovnicek(el) {
   let overview = null;
@@ -109,7 +111,10 @@ export default function slovnicek(el) {
         <h2>${t.icon} ${escapeHtml(t.name)}: procvičování</h2>
         <div class="tabs task-types">
           ${overview.taskTypes
-            .map((tt) => `<button type="button" data-type="${tt.key}" class="${tt.key === taskType ? 'active' : ''}">${escapeHtml(tt.name)}</button>`)
+            .map(
+              (tt) =>
+                `<button type="button" data-type="${tt.key}" class="${tt.key === taskType ? 'active' : ''}">${escapeHtml(tt.name)} ${FLAGS[tt.from]}→${FLAGS[tt.to]}</button>`
+            )
             .join('')}
         </div>
         <div class="practice-score">Správně: <strong>${score.correct}</strong> z ${score.total}</div>

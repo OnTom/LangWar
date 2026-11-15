@@ -15,7 +15,7 @@ function characterId(name) {
 function correctAnswer(taskId) {
   const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(taskId);
   const word = getWord(row.word_id);
-  if (row.type === 'choice') return JSON.parse(row.data).options.findIndex((o) => o.wordId === word.id);
+  if (row.type.startsWith('choice')) return JSON.parse(row.data).options.findIndex((o) => o.wordId === word.id);
   return row.type === 'translate' ? word.display : word.de;
 }
 
@@ -80,30 +80,26 @@ test('výhra posune zakázku, splněnou jde vyzvednout a přijde nová', async (
   assert.equal(claim.body.daily.tasks.length, 3);
 });
 
-test('zakázky na kouzla a bezchybné výhry', async () => {
+test('bezchybná výhra posune zakázku; zakázky na kouzla se zatím nenabízí', async () => {
   const token = await api.player('Mag', 'mage');
   const id = characterId('Mag');
   await api.get(token, '/tavern');
   db.prepare('DELETE FROM bounties WHERE character_id = ?').run(id);
   db.prepare(
     `INSERT INTO bounties (character_id, slot, kind, location, target, xp, gold, created_at)
-     VALUES (?, 0, 'spell', NULL, 2, 5, 5, 0), (?, 1, 'flawless', NULL, 1, 5, 5, 0), (?, 2, 'boss', 'statek', 1, 5, 5, 0)`
+     VALUES (?, 0, 'wins', 'zrcadla', 2, 5, 5, 0), (?, 1, 'flawless', NULL, 1, 5, 5, 0), (?, 2, 'boss', 'statek', 1, 5, 5, 0)`
   ).run(id, id, id);
 
-  await api.post(token, '/battle/start', { location: 'chalupa' });
-  const spell = await api.post(token, '/battle/action', { action: 'spell' });
-  await api.post(token, '/battle/answer', { answer: correctAnswer(spell.body.battle.task.id) });
-  const miss = await api.post(token, '/battle/action', { action: 'light' });
-  await api.post(token, '/battle/answer', { answer: 'nic' });
-  await api.post(token, '/battle/flee');
-
-  let bounties = (await api.get(token, '/tavern')).body.bounties;
-  assert.equal(bounties.find((b) => b.kind === 'spell').progress, 1);
-  assert.ok(miss.body.battle.task);
-
   await quickWin(token, id, { location: 'chalupa' });
-  bounties = (await api.get(token, '/tavern')).body.bounties;
+  const bounties = (await api.get(token, '/tavern')).body.bounties;
   assert.equal(bounties.find((b) => b.kind === 'flawless').progress, 1);
+
+  // Kouzla z knihovny ještě nejsou, proto ani zakázky na ně
+  for (let i = 0; i < 20; i++) {
+    db.prepare('DELETE FROM bounties WHERE character_id = ?').run(id);
+    const fresh = (await api.get(token, '/tavern')).body.bounties;
+    assert.ok(fresh.every((b) => b.kind !== 'spell'));
+  }
 });
 
 test('chybná odpověď pokazí bezchybnou výhru', () => {

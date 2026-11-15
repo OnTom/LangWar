@@ -123,14 +123,15 @@ export default function profil(el) {
             <h3>Bojové hodnoty</h3>
             <table class="attr-table stats">
               <tr><td>❤️ Životy</td><td class="num">${c.stats.hp}</td></tr>
-              <tr><td>🗡️ Poškození</td><td class="num">${c.stats.damage.min}–${c.stats.damage.max}</td></tr>
+              <tr title="Těžký útok proti nepříteli stejné úrovně; lehký útok dá 70 %"><td>🗡️ Poškození</td><td class="num">${c.stats.damage.min}–${c.stats.damage.max}</td></tr>
+              <tr title="Za každý bod Inteligence 1 bod many navíc"><td>💧 Mana</td><td class="num">${c.stats.mana}</td></tr>
               <tr><td>🍀 Kritický zásah</td><td class="num">${c.stats.critChance} %</td></tr>
               <tr title="Zbroj snižuje poškození od soupeře stejné úrovně, nejvýš o ${c.stats.maxArmorReduction} %">
                 <td>🦺 Zbroj ${c.stats.armor}</td><td class="num">${c.stats.armorReduction ? `−${c.stats.armorReduction}` : 0} %</td>
               </tr>
               ${c.class === 'warrior' ? `<tr><td>🛡️ Vykrytí úderu${c.stats.blockChance ? '' : ' (chybí štít)'}</td><td class="num">${c.stats.blockChance} %</td></tr>` : ''}
               ${c.stats.evadeChance ? `<tr><td>💨 Uhnutí</td><td class="num">${c.stats.evadeChance} %</td></tr>` : ''}
-              ${c.stats.unblockable ? '<tr><td>✨ Kouzla nejde vykrýt ani jim uhnout</td><td class="num">✔</td></tr>' : ''}
+
             </table>
           </div>
         </div>

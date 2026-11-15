@@ -155,17 +155,21 @@ Všechny souboje (výprava i aréna) jsou tahové se slovíčky, viz níže. Atr
 
 Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/game/expedition.js`):
 
-- Hráč zvolí útok a splní úkol se slovíčkem – **správná odpověď vždy zasáhne, špatná nebo pozdní mine**
-  - 🗡️ **Lehký útok**: výběr ze 4 překladů (DE → CZ, 10 s), síla ×0,6, zdarma
-  - 🪓 **Těžký útok**: psaný překlad do češtiny (15 s), síla ×1, zdarma
-  - ✨ **Kouzlo**: psaný překlad do němčiny (15 s), síla ×1,5, stojí 10 many
+- Hráč zvolí útok a splní úkol se slovíčkem – **správná odpověď vždy zasáhne, špatná nebo pozdní mine**.
+  Směr překladu se u obou útoků náhodně střídá (do češtiny i do němčiny):
+  - 🗡️ **Lehký útok**: výběr ze 4 možností (10 s), síla ×0,7
+  - 🪓 **Těžký útok**: psaný překlad (15 s), síla ×1
 - Pak útočí nepřítel; hrdinova obrana (štít válečníka, úhyb lovce) i zbroj platí.
   Nepřítel s manou občas sešle kouzlo, kterému se nedá uhnout.
-- **Mana** = 5 + 2 × Inteligence, každé kolo se doplní 2 body
-- Životy a poškození nepřítele se přepočítají tak, aby souboj trval zhruba 3–6 kol;
-  silnější strana (atributy, výbava, úroveň) potřebuje méně zásahů a vydrží víc (`BATTLE_*` v pravidlech).
+- Kouzla s gramatikou z knihovny se připravují, viz [docs/kouzla.md](docs/kouzla.md);
+  **mana** (30 + Inteligence, každé kolo +3) je pro ně připravená
+- **Měřítko soubojů** roste s úrovní zhruba lineárně, aby kouzla s pevnou silou dávala smysl:
+  běžný hrdina má ~100 životů na 1. úrovni, ~200 na 15. a ~300 na 30. a těžkým útokem dá ~16 / ~30 / ~45.
+  Atributy a výbava se porovnají s běžnou postavou stejné úrovně a čísla posunou (nejvýš 0,6–1,8×),
+  povolání: válečník víc vydrží, mág víc bije (`parHp`, `parHit`, `BATTLE_*` v pravidlech, `battleStats` v `battle.js`)
+- Nepřítel vydrží ~3,5 průměrného těžkého zásahu a hrdina ~8 zásahů nepřítele; na 1.–4. úrovni nepřátelé bijí slaběji.
   Podle simulace: bezchybný hráč vyhraje za ~3 kola, s 60 % správných odpovědí za ~5 kol
-  a vyhraje asi 85–98 % soubojů; se 40 % správných už často prohrává
+  a vyhraje asi 85–100 % soubojů; se 40 % správných už často prohrává
 - Zvolený útok nejde vyměnit a po obnovení stránky úkol pokračuje; když hráč nechá čas vypršet, kolo je netrefa
 - **Energie**: 50 soubojů denně (doplní se o půlnoci); výhra dá XP, zlato a s 10% šancí předmět
 
@@ -219,9 +223,11 @@ Krčma slouží jen k vydávání úkolů, bojuje se na Výpravě (`server/game/
 
 - Slovní zásoba je v `server/data/words/de.js`: témata s úrovní, německá podstatná jména se členem,
   české překlady oddělené `|` (první je hlavní, další jsou uznávaná synonyma)
-- Typy úkolů: **výběr** ze 4 možností (10 s), **překlad do češtiny** (15 s), **překlad do němčiny** (15 s)
-- Kontrola odpovědí: velikost písmen a interpunkce nevadí, synonyma se uznávají,
-  **diakritika a přehlásky musí být správně**; u podstatných jmen je člen nepovinný, ale napsaný musí sedět
+- Typy úkolů: **výběr** ze 4 možností oběma směry (10 s), **překlad do češtiny** (15 s), **překlad do němčiny** (15 s)
+- Kontrola odpovědí: mezery a interpunkce na okrajích nevadí, synonyma se uznávají,
+  **diakritika, přehlásky i velikost písmen musí být správně** (německá podstatná jména velkým písmenem,
+  české odpovědi malým); u podstatných jmen je člen nepovinný, ale napsaný musí sedět
+  a smí začínat velkým písmenem jako na začátku věty („Der Hund“)
 - Správnou odpověď zná jen server; každý úkol jde zodpovědět jednou a po vypršení času se nepočítá
 - Hra si pamatuje úspěšnost u každého slova a chybná slova dává častěji
 

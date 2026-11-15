@@ -14,7 +14,7 @@ import {
   battleReward,
 } from './rules.js';
 import { TASK_TYPES, TOPICS, TaskError, createTask, answerTask, openTask } from './lingo.js';
-import { createBattle, actionError, payForAction, playRound } from './battle.js';
+import { createBattle, actionError, playRound } from './battle.js';
 import { createMonster } from './monsters.js';
 import { findCharacter, characterCombatProfile, addXp, today } from './character.js';
 import { generateItem, itemView } from './items.js';
@@ -89,11 +89,10 @@ export function battleView(row) {
       key,
       name: a.name,
       icon: a.icon,
-      mana: a.mana,
       power: a.power,
-      taskName: TASK_TYPES[a.task].name,
-      timeLimit: TASK_TYPES[a.task].timeLimit,
-      available: state.hero.mana >= a.mana,
+      taskName: a.taskName,
+      timeLimit: TASK_TYPES[a.tasks[0]].timeLimit,
+      available: true,
     })),
     pendingAction: row.pending_action,
     task: pending && !pending.expired ? pending.task : null,
@@ -208,8 +207,10 @@ export function chooseAction(c, action) {
   const state = JSON.parse(row.state);
   const error = actionError(state, action);
   if (error) throw new BattleError(error);
-  payForAction(state, action);
-  const task = createTask(c.id, { type: BATTLE_ACTIONS[action].task, topics: state.topics, context: `battle:${row.id}` });
+  // Směr překladu se střídá náhodně (do češtiny i do cizího jazyka)
+  const types = BATTLE_ACTIONS[action].tasks;
+  const type = types[Math.floor(Math.random() * types.length)];
+  const task = createTask(c.id, { type, topics: state.topics, context: `battle:${row.id}` });
   return save(row, state, { pending_action: action, task_id: task.id });
 }
 

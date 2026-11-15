@@ -26,13 +26,16 @@ const LOCATION_BY_KEY = new Map(LOCATIONS.map((l) => [l.key, l]));
 
 // Druhy zakázek: weight = jak často padají, size = rozsah cíle,
 // value = kolik „vítězství“ odměny zakázka dá za každý bod cíle
+// weight 0 = druh se teď nenabízí
 const KINDS = {
   defeat: { weight: 4, size: [2, 3], value: 0.8, location: true },
   wins: { weight: 3, size: [3, 5], value: 0.6, location: true },
-  spell: { weight: 2, size: [3, 5], value: 0.5, location: false },
+  spell: { weight: 0, size: [3, 5], value: 0.5, location: false }, // vrátí se s kouzly z knihovny
   flawless: { weight: 2, size: [1, 2], value: 1.2, location: false },
   boss: { weight: 1, size: [1, 1], value: BOSS_WINS_REQUIRED * 0.6 + 2, location: true },
 };
+
+const ACTIVE_KINDS = Object.values(KINDS).filter((k) => k.weight > 0).length;
 
 // Text zakázky pro hráče
 function describe(b) {
@@ -63,7 +66,7 @@ const FLAVOR = {
 function generate(c, slot, avoid = new Set()) {
   const unlocked = LOCATIONS.filter((l) => l.level <= c.level);
   const recent = unlocked.slice(-3);
-  const kinds = Object.entries(KINDS).filter(([key]) => !avoid.has(key));
+  const kinds = Object.entries(KINDS).filter(([key, k]) => k.weight > 0 && !avoid.has(key));
   const total = kinds.reduce((s, [, k]) => s + k.weight, 0);
   let roll = Math.random() * total;
   const [kind, def] = kinds.find(([, k]) => (roll -= k.weight) <= 0) ?? kinds[0];
@@ -101,7 +104,7 @@ const ensureBounties = db.transaction((c) => {
   const kinds = new Set(rows.map((r) => r.kind));
   for (let slot = 0; slot < BOUNTY_SLOTS; slot++) {
     if (rows.some((r) => r.slot === slot)) continue;
-    const bounty = generate(c, slot, kinds.size < Object.keys(KINDS).length - 1 ? kinds : new Set());
+    const bounty = generate(c, slot, kinds.size < ACTIVE_KINDS - 1 ? kinds : new Set());
     kinds.add(bounty.kind);
     insertStmt.run(bounty);
   }

@@ -14,7 +14,7 @@ const honorOf = (name) => db.prepare('SELECT honor FROM characters WHERE id = ?'
 function correctAnswer(taskId) {
   const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(taskId);
   const word = getWord(row.word_id);
-  if (row.type === 'choice') return JSON.parse(row.data).options.findIndex((o) => o.wordId === word.id);
+  if (row.type.startsWith('choice')) return JSON.parse(row.data).options.findIndex((o) => o.wordId === word.id);
   return row.type === 'translate' ? word.display : word.de;
 }
 
