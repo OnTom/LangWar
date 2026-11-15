@@ -104,7 +104,10 @@ test('bezchybná výhra posune zakázku; zakázky na kouzla se zatím nenabízí
 
 test('chybná odpověď pokazí bezchybnou výhru', () => {
   const id = characterId('Mag');
-  db.prepare("UPDATE bounties SET progress = 0, target = 2 WHERE character_id = ? AND kind = 'flawless'").run(id);
+  db.prepare('DELETE FROM bounties WHERE character_id = ?').run(id);
+  db.prepare(
+    "INSERT INTO bounties (character_id, slot, kind, target, xp, gold, created_at) VALUES (?, 0, 'flawless', 2, 5, 5, 0)"
+  ).run(id);
   progressBounties(id, { type: 'win', location: 'chalupa', enemy: 0, boss: false, flawless: false });
   const row = db.prepare("SELECT progress FROM bounties WHERE character_id = ? AND kind = 'flawless'").get(id);
   assert.equal(row.progress, 0);
