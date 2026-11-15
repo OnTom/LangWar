@@ -12,6 +12,7 @@ import {
   TaskError,
 } from '../game/lingo.js';
 import { progressDaily } from '../game/daily.js';
+import { withSolution } from '../game/admin.js';
 
 // Slovníček: přehled slov a procvičování (bez odměn, jen pro učení)
 const router = Router();
@@ -46,7 +47,8 @@ router.post('/task', (req, res) => {
   const { type, topic } = req.body || {};
   if (!Object.hasOwn(TASK_TYPES, type)) return res.status(400).json({ error: 'Neznámý typ úkolu.' });
   if (topic && !TOPICS.some((t) => t.key === topic)) return res.status(400).json({ error: 'Takové téma neexistuje.' });
-  res.json({ task: createTask(req.character.id, { type, topics: topic ? [topic] : null, context: 'practice' }) });
+  const task = createTask(req.character.id, { type, topics: topic ? [topic] : null, context: 'practice' });
+  res.json({ task: withSolution(req.user.id, task) });
 });
 
 // POST /api/lingo/answer  { taskId, answer }

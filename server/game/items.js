@@ -60,13 +60,13 @@ function itemValue(level, rarity) {
 /**
  * Vygeneruje náhodný předmět.
  * cls – pro koho je určen (zbraň bude pro tuto třídu, bonusy častěji do hlavního atributu)
- * slots – ze kterých slotů vybírat, rarityBoost – zvýhodnění vzácnějších předmětů
+ * slots – ze kterých slotů vybírat, rarityBoost – zvýhodnění vzácnějších předmětů,
+ * rarity – pevně daná rarita (jinak náhodná)
  */
-export function generateItem({ level, cls, slots = slotsForClass(cls), rarityBoost = 0 }) {
+export function generateItem({ level, cls, slots = slotsForClass(cls), rarityBoost = 0, rarity = pickRarity(rarityBoost) }) {
   // Zbraň padá dvakrát častěji než ostatní
   const weighted = slots.flatMap((s) => (s === 'weapon' ? [s, s] : [s]));
   const slot = pick(weighted);
-  const rarity = pickRarity(rarityBoost);
   const r = RARITIES[rarity];
   const item = emptyItem(slot, level);
 

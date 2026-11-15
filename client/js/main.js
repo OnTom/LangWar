@@ -13,10 +13,11 @@ import cech from './screens/cech.js';
 import hospoda from './screens/hospoda.js';
 import slovnicek from './screens/slovnicek.js';
 import vyprava from './screens/vyprava.js';
+import admin from './screens/admin.js';
 import { connectChat, disconnectChat, onChat } from './chat.js';
 
 // Každá obrazovka je funkce, která vykreslí obsah do předaného elementu
-const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, cech, hospoda, slava };
+const screens = { profil, krcma, vyprava, arena, obchod, slovnicek, cech, hospoda, slava, admin };
 const DEFAULT_SCREEN = 'profil';
 
 const screenEl = document.getElementById('screen');
@@ -75,6 +76,8 @@ function updateMenu(c) {
   // Odznaky: nevyzvednuté odměny v krčmě (zakázky a denní úkoly) a pozvánky do cechu
   setBadge('tavern-badge', c ? c.dailyReady + c.bountiesReady : 0);
   setBadge('guild-badge', c && !c.guild ? c.guildInvites : 0);
+  // Administraci vidí jen admin (server ji stejně pustí jen jemu)
+  document.getElementById('admin-link').hidden = !c?.isAdmin;
 }
 
 function logout() {
@@ -88,8 +91,9 @@ function logout() {
 function router() {
   if (!getUser() || !getCharacter()) return;
 
-  const name = location.hash.replace('#/', '') || DEFAULT_SCREEN;
-  const render = screens[name] || screens[DEFAULT_SCREEN];
+  let name = location.hash.replace('#/', '') || DEFAULT_SCREEN;
+  if (!screens[name] || (name === 'admin' && !getCharacter().isAdmin)) name = DEFAULT_SCREEN;
+  const render = screens[name];
 
   document.querySelectorAll('#menu a').forEach((a) => {
     a.classList.toggle('active', a.dataset.screen === name);

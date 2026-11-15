@@ -5,6 +5,7 @@ import { CLASSES } from '../game/rules.js';
 import { findCharacter, RANK_ORDER } from '../game/character.js';
 import { arenaState, startArenaBattle, ArenaError } from '../game/arena.js';
 import { activeBattle, battleView } from '../game/expedition.js';
+import { battleWithSolution } from '../game/admin.js';
 
 const LADDER_SIZE = 50;
 
@@ -21,7 +22,7 @@ router.use((req, res, next) => {
 // GET /api/arena – stav arény a případně probíhající souboj v aréně
 router.get('/', (req, res) => {
   const row = activeBattle(req.character);
-  const battle = row?.status === 'active' ? battleView(row) : null;
+  const battle = row?.status === 'active' ? battleWithSolution(req.user.id, battleView(row)) : null;
   // Probíhající souboj na výpravě se tu jen ohlásí
   res.json({
     ...arenaState(findCharacter(req.user.id)),

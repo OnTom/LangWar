@@ -38,6 +38,7 @@ obnova: `npm run restore -- backups/soubor.db` (při vypnutém serveru).
 | `NODE_ENV`   | –                | `production` zapne produkční kontroly (viz Zabezpečení) |
 | `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **v produkci povinný, aspoň 32 znaků** |
 | `TRUST_PROXY` | `0`             | Počet proxy před serverem (např. `1` za nginx/hostingem), aby limity viděly skutečnou IP |
+| `ADMIN_USERS` | –               | Jména účtů se správou hry, oddělená čárkou (např. `Tomas,Petra`) |
 | `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění energie a denní úkoly |
 | `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – čekání v aréně (`0.05` = 5 % normální doby) |
 
@@ -48,6 +49,23 @@ QUEST_TIME_SCALE=0.05 npm run dev
 ```
 
 Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
+
+## Administrace
+
+Správce hry vidí v menu **🛠️ Admin**: nastavení úrovně, zlata, energie a atributů, předměty
+libovolné rarity, okamžitý boss, splnění zakázek a denních úkolů, zkrácení souboje, aréna bez čekání,
+režim „ukazovat správné odpovědi“ a smazání postavy. Každá akce se zapíše do záznamu.
+
+Kdo je správce:
+
+```bash
+npm run admin -- Tomas            # přidá práva účtu Tomas (účet musí existovat)
+npm run admin -- Tomas --remove   # odebere práva
+npm run admin                     # vypíše správce
+```
+
+Ve Windows PowerShellu `npm.cmd run admin -- Tomas`. Na serveru jde místo toho nastavit proměnnou
+`ADMIN_USERS=Tomas`. Práva se ověřují při každém požadavku, odebrání platí hned.
 
 ## Zabezpečení
 
@@ -110,6 +128,8 @@ Ve Windows (PowerShell): `$env:QUEST_TIME_SCALE=0.05; npm run dev`
 | POST   | `/api/battle/action` | Zvolit útok `{action: 'light' \| 'heavy' \| 'spell'}` → úkol |
 | POST   | `/api/battle/answer` | Odpověď na úkol útoku `{answer}` → průběh kola |
 | POST   | `/api/battle/flee`   | Utéct ze souboje (bez odměny)     |
+| GET    | `/api/admin`         | Administrace (jen správce): stav postavy, lokace, záznam akcí |
+| POST   | `/api/admin/level`, `/gold`, `/energy`, `/attributes`, `/item`, `/boss`, `/bounties`, `/daily`, `/battle`, `/arena-ready`, `/answers`, `/reset-character` | Akce správce |
 | GET    | `/api/chat?channel=global\|guild` | Posledních 50 zpráv  |
 | POST   | `/api/chat`          | Poslat zprávu `{channel, text}`   |
 | WS     | `/ws`                | Zprávy chatu v reálném čase (viz `server/ws.js`) |

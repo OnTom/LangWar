@@ -952,6 +952,22 @@ h3 small { color: #7a5a2a; }
 .flee-btn:disabled { opacity: 0.4; }
 .battle-log:empty { display: none; }
 
+/* Administrace */
+#menu a[hidden] { display: none; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.admin-box { background: #fffaf0; border: 2px solid var(--panel-dark); border-radius: 8px; padding: 12px; }
+.admin-box h3 { margin: 0 0 8px; color: var(--accent); }
+.admin-box.danger { border-color: var(--accent); }
+.admin-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin: 8px 0; }
+.admin-attrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; align-items: end; }
+.admin-box label { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; font-weight: bold; }
+.admin-box input, .admin-box select { padding: 6px; font: inherit; border: 2px solid var(--panel-dark); border-radius: 6px; max-width: 100%; }
+.admin-box input[type="number"] { width: 110px; }
+.admin-box .admin-check { flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; }
+.admin-log { list-style: none; padding: 0; font-size: 0.9rem; }
+.admin-log li { padding: 3px 0; border-bottom: 1px dashed var(--panel-dark); }
+.task-admin { margin: -6px 0 10px; font-size: 0.9rem; color: #6a4bc4; }
+
 /* Krčma: zakázky */
 .section-title { margin: 22px 0 8px; color: var(--accent); border-bottom: 2px solid var(--panel-dark); padding-bottom: 4px; }
 .bounty h3 { font-size: 1rem; }

@@ -18,6 +18,13 @@ export const QUEST_TIME_SCALE = Number(process.env.QUEST_TIME_SCALE) || 1;
 // požadavků viděly skutečnou IP hráče. 0 = přímo bez proxy.
 export const TRUST_PROXY = Number(process.env.TRUST_PROXY) || 0;
 
+// Jména účtů s přístupem do administrace (oddělená čárkou), např. ADMIN_USERS=Tomas,Petra.
+// Admina jde nastavit i příkazem npm run admin -- <jméno> (uloží se do databáze).
+export const ADMIN_USERS = (process.env.ADMIN_USERS || '')
+  .split(',')
+  .map((name) => name.trim().toLowerCase())
+  .filter(Boolean);
+
 if (IS_PRODUCTION) {
   // V produkci server bez pořádného tajného klíče nespustíme – kdo ho zná, může vyrobit token za kohokoli
   if (JWT_SECRET === DEV_SECRET || JWT_SECRET.length < 32) {

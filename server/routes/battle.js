@@ -13,6 +13,7 @@ import {
   currentEnergy,
   mapView,
 } from '../game/expedition.js';
+import { battleWithSolution } from '../game/admin.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -23,6 +24,11 @@ router.use((req, res, next) => {
   req.character = c;
   next();
 });
+
+// Adminovi s režimem „ukazovat odpovědi“ přidá k úkolu správnou odpověď
+function view(req, row) {
+  return battleWithSolution(req.user.id, battleView(row));
+}
 
 function energy(c) {
   return { energy: currentEnergy(c), energyMax: ENERGY_MAX };
@@ -45,7 +51,7 @@ router.get(
   '/',
   handle((req, res) => {
     const row = activeBattle(req.character);
-    res.json({ battle: battleView(row?.status === 'active' ? row : null), ...energy(req.character) });
+    res.json({ battle: view(req, row?.status === 'active' ? row : null), ...energy(req.character) });
   })
 );
 
@@ -71,7 +77,7 @@ router.post(
   '/action',
   handle((req, res) => {
     const row = chooseAction(req.character, String(req.body?.action ?? ''));
-    res.json({ battle: battleView(row) });
+    res.json({ battle: view(req, row) });
   })
 );
 

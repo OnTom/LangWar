@@ -205,6 +205,21 @@ export function openTask(characterId, taskId) {
   return { task: publicTask(row), expired: Date.now() > row.expires_at + GRACE_MS };
 }
 
+/** Správná odpověď na úkol – jen pro administraci (režim „ukazovat odpovědi“). */
+export function taskSolution(taskId) {
+  const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(String(taskId));
+  if (!row) return null;
+  const word = getWord(row.word_id);
+  const data = JSON.parse(row.data);
+  if (row.type === 'choice') {
+    const index = data.options.findIndex((o) => o.wordId === word.id);
+    return `${index + 1}. ${data.options[index].text}`;
+  }
+  if (row.type === 'translate') return word.cz.filter((f, i, all) => all.indexOf(f) === i).join(', ');
+  const candidates = wordsWithCzech(data.prompt);
+  return (candidates.length ? candidates : [word]).map((w) => w.de).join(' / ');
+}
+
 function recordStat(characterId, wordId, correct) {
   db.prepare(
     `INSERT INTO word_stats (character_id, word_id, correct, wrong, last_seen) VALUES (?, ?, ?, ?, ?)

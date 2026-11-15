@@ -11,6 +11,7 @@
     "dev": "node --watch server/server.js",
     "backup": "node server/backup.js",
     "restore": "node server/restore.js",
+    "admin": "node server/admin-cli.js",
     "test": "node --test"
   },
   "dependencies": {

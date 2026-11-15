@@ -18,6 +18,7 @@ import { itemView, combatProfile, INVENTORY_SIZE } from './items.js';
 import { getItems } from './inventory.js';
 import { dailyReadyCount } from './daily.js';
 import { bountiesReady } from './bounties.js';
+import { isAdmin } from './admin.js';
 import { membership, ROLE_NAMES } from './guild.js';
 
 const SELECT_CHARACTER = `SELECT c.*, u.username AS name FROM characters c JOIN users u ON u.id = c.user_id`;
@@ -104,6 +105,7 @@ export function toView(c) {
     dailyReady: dailyReadyCount(c),
     bountiesReady: bountiesReady(c.id),
     guild: guildSummary(c.id),
+    isAdmin: isAdmin(c.user_id),
     guildInvites: db.prepare('SELECT COUNT(*) AS n FROM guild_invites WHERE character_id = ?').get(c.id).n,
     attributes,
     stats: {

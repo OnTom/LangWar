@@ -202,6 +202,15 @@ db.exec(`
     UNIQUE (character_id, slot)
   );
 
+  -- Co admini dělali (kvůli dohledatelnosti)
+  CREATE TABLE IF NOT EXISTS admin_log (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    action     TEXT    NOT NULL,
+    details    TEXT    NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  );
+
   -- Postup v lokacích Výpravy: výhry celkem, výhry od posledního bosse, poražení bossové
   CREATE TABLE IF NOT EXISTS location_progress (
     character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
@@ -234,6 +243,8 @@ addColumn('characters', 'arena_xp_wins', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'energy', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('characters', 'energy_day', "TEXT NOT NULL DEFAULT ''");
 addColumn('characters', 'map_location', "TEXT NOT NULL DEFAULT 'chalupa'");
+addColumn('users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('users', 'admin_show_answers', 'INTEGER NOT NULL DEFAULT 0');
 
 // Staré questy na čas (a žízeň) nahradily zakázky: rozpracované questy i jejich odměny zmizí,
 // denní úkol „strav minuty na výpravách“ se změní na úkol se slovíčky

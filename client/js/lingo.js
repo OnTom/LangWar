@@ -37,6 +37,7 @@ export function renderTask(el, task, { onAnswer }) {
       <div class="task-type">${escapeHtml(task.typeName)} ${FLAGS[task.from]} → ${FLAGS[task.to]}</div>
       <div class="task-prompt">${escapeHtml(task.prompt)}</div>
       <div class="bar task-timer"><div class="bar-fill" style="width: 100%"></div><span></span></div>
+      ${task.adminSolution ? `<div class="task-admin">🛠️ Odpověď: <strong>${escapeHtml(task.adminSolution)}</strong></div>` : ''}
       ${answerArea}
     </div>`;
 
