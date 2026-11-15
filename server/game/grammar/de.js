@@ -5,6 +5,7 @@
 import GRAMMAR from '../../data/grammar/de.js';
 
 const ARTICLE_GENDER = { der: 'm', die: 'f', das: 'n' };
+const WEAK = new Set(GRAMMAR.weakNouns); // slabá podstatná jména (den Löwen) – ve cvičeních na pády ne
 const GENDER_OF = { m: 'mužského rodu', f: 'ženského rodu', n: 'středního rodu' };
 
 function shuffle(arr) {
@@ -148,7 +149,8 @@ const generators = {
   // Akuzativ (4. pád) u členu
   akkusativ({ format, nouns, pick }) {
     const definite = Math.random() < 0.6;
-    const n = pick(nouns, (x) => `${definite ? 'def' : 'indef'}:${x.id}`);
+    const pool = nouns.filter((x) => !WEAK.has(x.de));
+    const n = pick(pool, (x) => `${definite ? 'def' : 'indef'}:${x.id}`);
     const verbs = GRAMMAR.accusativeVerbs.filter(([, , , topics]) => !topics || topics.includes(n.topic));
     const [form, inf, cz] = randomOf(verbs);
     const answer = definite
@@ -186,7 +188,153 @@ const generators = {
       rule: pluralRule(n, answer),
     };
   },
+
+  // Nepravidelná slovesa v přítomném čase (změna kmene u du a er/sie/es, sein, haben, werden, wissen)
+  unregelmaessig({ format, pick }) {
+    const verbs = [
+      ...GRAMMAR.irregularVerbs.map(([inf, cz, du, er]) => ({ inf, cz, forms: irregularForms(inf, du, er) })),
+      ...Object.entries(GRAMMAR.irregularTables).map(([inf, t]) => ({ inf, cz: t.cz, forms: t, table: true })),
+    ];
+    // Hlavně osoby, kde se kmen mění (du, er/sie/es); občas i ostatní, ať se ví, kde se nemění
+    const persons = GRAMMAR.persons;
+    const items = verbs.flatMap((v) =>
+      persons
+        .filter((p) => v.table || ['du', 'er', 'sie_sg'].includes(p.key) || Math.random() < 0.3)
+        .map((p) => ({ ...v, p }))
+    );
+    const { inf, cz, forms, table, p } = pick(items, (x) => `${x.inf}:${x.p.key}`);
+    const form = forms[p.key];
+    const stem = inf.replace(/e?n$/, '');
+    const wrong = [...new Set(persons.map((x) => forms[x.key])), conjugate(inf, p.key), `${stem}st`, `${stem}t`];
+    return {
+      item: `${inf}:${p.key}`,
+      instruction: format === 'fill' ? 'Doplň sloveso ve správném tvaru' : 'Vyber správný tvar slovesa',
+      prompt: `${p.de} ___ (${inf})`,
+      hint: `${p.de} = ${p.cz} · ${inf} = ${cz}`,
+      ...(format === 'choice' ? { options: choice(form, wrong) } : {}),
+      answers: [form],
+      solution: `${p.de} ${form}`,
+      rule: table
+        ? `${inf} je úplně nepravidelné: ich ${forms.ich}, du ${forms.du}, er ${forms.er}, wir ${forms.wir}, ihr ${forms.ihr}, sie ${forms.sie_pl}.`
+        : stemChangeRule(inf, forms),
+    };
+  },
+
+  // Perfektum s haben: tvar haben + příčestí minulé na konci věty
+  perfekt_haben({ format, nouns, pick }) {
+    const subjects = GRAMMAR.persons.filter((p) => p.key !== 'sie_pl');
+    if (format === 'order') {
+      const verbs = GRAMMAR.perfectVerbs.filter(([, , , topics]) => topics);
+      const [inf, cz, participle, topics] = pick(verbs, (v) => `order:${v[0]}`);
+      let pool = nouns.filter((n) => topics.includes(n.topic) && !WEAK.has(n.de));
+      if (pool.length < 3) pool = nouns.filter((n) => !WEAK.has(n.de));
+      const n = randomOf(pool);
+      const p = randomOf(subjects.filter((x) => ['ich', 'du', 'er', 'wir'].includes(x.key)));
+      const subject = p.de[0].toUpperCase() + p.de.slice(1);
+      const article = { m: 'den', f: 'die', n: 'das' }[n.gender];
+      const words = [subject, HABEN[p.key], article, n.noun, participle];
+      return {
+        item: `order:${inf}`,
+        instruction: 'Poskládej větu v perfektu',
+        prompt: `${p.cz} – ${inf} (${cz}) – ${n.de} (${n.cz})`,
+        hint: 'Perfektum: haben na 2. místě, příčestí na konci',
+        tiles: shuffle(words),
+        answers: [words.join(' ')],
+        solution: `${words.join(' ')}.`,
+        rule: `Perfektum = tvar haben na druhém místě + příčestí (${participle}) úplně na konci věty.`,
+      };
+    }
+    const [inf, cz, participle] = pick(GRAMMAR.perfectVerbs, (v) => v[0]);
+    const p = randomOf(subjects);
+    const subject = p.de[0].toUpperCase() + p.de.slice(1);
+    // Při výběru občas hledáme správný tvar haben místo příčestí
+    if (format === 'choice' && Math.random() < 0.35) {
+      return {
+        item: `haben:${p.key}`,
+        instruction: 'Vyber správný tvar haben',
+        prompt: `${subject} ___ ${participle}.`,
+        hint: `${p.de} = ${p.cz} · ${inf} = ${cz}`,
+        options: choice(HABEN[p.key], ['habe', 'hast', 'hat', 'haben', 'habt']),
+        answers: [HABEN[p.key]],
+        solution: `${subject} ${HABEN[p.key]} ${participle}.`,
+        rule: 'haben: ich habe, du hast, er/sie/es hat, wir haben, ihr habt, sie/Sie haben.',
+      };
+    }
+    return {
+      item: inf,
+      instruction: format === 'fill' ? 'Doplň příčestí minulé' : 'Vyber příčestí minulé',
+      prompt: `${subject} ${HABEN[p.key]} ___ (${inf}).`,
+      hint: `${inf} = ${cz}`,
+      ...(format === 'choice' ? { options: choice(participle, participleDistractors(inf, participle)) } : {}),
+      answers: [participle],
+      solution: `${subject} ${HABEN[p.key]} ${participle}.`,
+      rule: participleRule(inf, participle),
+    };
+  },
+
+  // Dativ (3. pád): s kým, komu, odkud
+  dativ({ format, nouns, allNouns, pick }) {
+    const templates = [
+      { key: 'mit', list: [...GRAMMAR.dativePeople, ...GRAMMAR.dativeAnimals], make: (a, n) => `Ich spiele mit ${a} ${n}.`, hint: 'mit = s (kým?)' },
+      { key: 'helfen', list: GRAMMAR.dativePeople, make: (a, n) => `Ich helfe ${a} ${n}.`, hint: 'helfen = pomáhat (komu?)' },
+      { key: 'geben', list: [...GRAMMAR.dativePeople, ...GRAMMAR.dativeAnimals], make: (a, n) => `Ich gebe ${a} ${n} einen Apfel.`, hint: 'geben = dát (komu?) · einen Apfel = jablko' },
+      { key: 'aus', list: GRAMMAR.dativePlaces, make: (a, n) => `Ich komme aus ${a} ${n}.`, hint: 'aus = z (odkud?)' },
+    ];
+    const t = randomOf(templates);
+    const allowed = new Set(t.list);
+    let pool = nouns.filter((n) => allowed.has(n.de));
+    if (pool.length < 4) pool = allNouns.filter((n) => allowed.has(n.de));
+    const definite = Math.random() < 0.6;
+    const n = pick(pool, (x) => `${definite ? 'def' : 'indef'}:${x.id}`);
+    const answer = definite ? { m: 'dem', f: 'der', n: 'dem' }[n.gender] : { m: 'einem', f: 'einer', n: 'einem' }[n.gender];
+    const options = definite ? ['dem', 'den', 'der', 'des', 'die'] : ['einem', 'einen', 'einer', 'eine'];
+    return {
+      item: `${definite ? 'def' : 'indef'}:${n.id}`,
+      instruction: format === 'fill' ? `Doplň ${definite ? 'člen určitý' : 'člen neurčitý'} ve 3. pádě` : 'Vyber člen ve 3. pádě',
+      prompt: t.make('___', n.noun),
+      hint: `${t.hint} · ${n.de} = ${n.cz}`,
+      ...(format === 'choice' ? { options: choice(answer, options) } : {}),
+      answers: [answer],
+      solution: t.make(answer, n.noun),
+      rule:
+        n.gender === 'f'
+          ? `${n.de} je ženského rodu: ve 3. pádě die → der, eine → einer.`
+          : `${n.de} je ${GENDER_OF[n.gender]}: ve 3. pádě ${n.article} → dem, ein → einem.`,
+    };
+  },
 };
+
+// --- Nepravidelná slovesa a perfektum ---------------------------------------
+
+const HABEN = GRAMMAR.irregularTables.haben;
+
+// Tvary nepravidelného slovesa: du a er/sie/es podle tabulky, ostatní pravidelně
+function irregularForms(inf, du, er) {
+  const forms = Object.fromEntries(GRAMMAR.persons.map((p) => [p.key, conjugate(inf, p.key)]));
+  return { ...forms, du, er, sie_sg: er };
+}
+
+function stemChangeRule(inf, forms) {
+  const stem = inf.replace(/e?n$/, '');
+  const changed = forms.du.replace(/s?st$|t$/, '');
+  let change = 'mění kmen';
+  if (/ie/.test(changed) && !/ie/.test(stem)) change = 'mění e → ie';
+  else if (/ä/.test(changed) && !/ä/.test(stem)) change = /äu/.test(changed) ? 'mění au → äu' : 'mění a → ä';
+  else if (/i/.test(changed) && !/i/.test(stem)) change = 'mění e → i';
+  return `${inf} ${change} jen u du a er/sie/es: du ${forms.du}, er ${forms.er}. Ostatní osoby jsou pravidelné: ich ${forms.ich}, wir ${forms.wir}.`;
+}
+
+function participleDistractors(inf, participle) {
+  const stem = inf.replace(/e?n$/, '');
+  return [`ge${stem}t`, `ge${stem}en`, `ge${inf}`, `${stem}t`, inf, `ge${stem}et`, participle.replace(/^ge/, '')];
+}
+
+function participleRule(inf, participle) {
+  if (!participle.startsWith('ge')) return `Slovesa s předponou ver-, be-, er- nemají ge-: ${inf} → ${participle}.`;
+  if (participle.endsWith('et') && /[td]et$/.test(participle)) return `Kmen končí na -t/-d, proto ge-…-et: ${inf} → ${participle}.`;
+  if (participle.endsWith('t')) return `Pravidelné sloveso: ge- + kmen + -t (${inf} → ${participle}).`;
+  return `Nepravidelné sloveso: příčestí končí na -en a je potřeba se ho naučit (${inf} → ${participle}).`;
+}
 
 // --- Nápovědy k pravidlům ------------------------------------------------------
 
@@ -228,6 +376,9 @@ export const FORMATS = {
   negation: ['choice', 'fill', 'order'],
   akkusativ: ['choice', 'fill'],
   plural: ['choice', 'fill'],
+  unregelmaessig: ['choice', 'fill'],
+  perfekt_haben: ['choice', 'fill', 'order'],
+  dativ: ['choice', 'fill'],
 };
 
 export default generators;

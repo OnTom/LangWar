@@ -74,7 +74,8 @@ test('knihovna: stav lekcí podle úrovně a pořadí', async () => {
   const status = Object.fromEntries(body.lessons.map((l) => [l.key, l.status]));
   assert.equal(status.artikel, 'level', 'první lekce až od 2. úrovně');
   assert.equal(status.praesens, 'previous');
-  assert.equal(status.dativ, 'soon');
+  assert.equal(status.dativ, 'previous');
+  assert.equal(status.wortstellung, 'soon');
   assert.equal(body.lessons[0].spell.name, 'Ohnivá koule');
   assert.deepEqual(body.spellbook.spells, []);
 
@@ -154,20 +155,21 @@ test('kniha kouzel: nejvýš 4 nasazená, jen naučená', async () => {
   assert.equal(learned.body.spellRanks.attack, 2, 'množné číslo = Útok II');
 
   const { body } = await api.get(token, '/library');
-  assert.equal(body.spellbook.spells.length, 4, 'pět hotových lekcí = čtyři druhy kouzel');
-  assert.equal(body.spellbook.slots.length, 4);
+  assert.equal(body.spellbook.spells.length, 5, 'osm hotových lekcí = všech pět druhů kouzel');
+  assert.equal(body.spellbook.slots.length, 4, 'nasazená jsou nejvýš 4');
   assert.equal(body.spellbook.spells.find((s) => s.kind === 'attack').rankName, 'II');
+  assert.equal(body.spellbook.spells.find((s) => s.kind === 'control').rankName, 'II', 'dativ = Kontrola II');
 
   let r = await api.post(token, '/library/slots', { kinds: ['heal', 'attack'] });
   assert.deepEqual(r.body.spellbook.slots, ['heal', 'attack']);
-  r = await api.post(token, '/library/slots', { kinds: ['buff'] });
-  assert.equal(r.status, 400, 'Posílení ještě neumí');
-  r = await api.post(token, '/library/slots', { kinds: ['attack', 'heal', 'defense', 'control', 'attack'] });
-  assert.deepEqual(r.body.spellbook.slots, ['attack', 'heal', 'defense', 'control']);
+  r = await api.post(token, '/library/slots', { kinds: ['buff', 'attack', 'heal', 'defense', 'control'] });
+  assert.equal(r.status, 400, 'pět kouzel se nevejde');
+  r = await api.post(token, '/library/slots', { kinds: ['buff', 'attack', 'heal', 'defense', 'buff'] });
+  assert.deepEqual(r.body.spellbook.slots, ['buff', 'attack', 'heal', 'defense']);
 
   r = await api.post(token, '/admin/library', { action: 'forget' });
   assert.deepEqual(r.body.spellRanks, {});
   r = await api.post(token, '/admin/library', { action: 'learn', lesson: 'negation' });
   assert.equal(r.body.spellRanks.defense, 1);
-  assert.equal((await api.post(token, '/admin/library', { action: 'learn', lesson: 'dativ' })).status, 400);
+  assert.equal((await api.post(token, '/admin/library', { action: 'learn', lesson: 'wortstellung' })).status, 400);
 });

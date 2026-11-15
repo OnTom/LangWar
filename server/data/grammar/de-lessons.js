@@ -146,4 +146,96 @@ export default {
       'Zdrobněliny na -chen se nemění: das Kaninchen → die Kaninchen.',
     ],
   },
+  unregelmaessig: {
+    summary: 'Některá slovesa mění kmen u du a er/sie/es: du sprichst, er sieht, du fährst.',
+    intro: [
+      'Nepravidelná slovesa mají v přítomném čase stejné koncovky jako pravidelná, ale u du a er/sie/es se jim změní samohláska v kmeni.',
+      'Ostatní osoby (ich, wir, ihr, sie) zůstávají pravidelné: ich spreche, wir sprechen – ale du sprichst, er spricht.',
+      'Několik sloves je úplně nepravidelných a je potřeba se je naučit celá: sein, haben, werden, wissen.',
+    ],
+    table: {
+      head: ['Změna', 'Infinitiv', 'du', 'er / sie / es'],
+      rows: [
+        ['e → i', 'sprechen (mluvit)', 'sprichst', 'spricht'],
+        ['e → i', 'geben, helfen, nehmen, essen', 'gibst, hilfst, nimmst, isst', 'gibt, hilft, nimmt, isst'],
+        ['e → ie', 'sehen (vidět), lesen (číst)', 'siehst, liest', 'sieht, liest'],
+        ['a → ä', 'schlafen (spát), fahren (jet)', 'schläfst, fährst', 'schläft, fährt'],
+        ['au → äu', 'laufen (běžet)', 'läufst', 'läuft'],
+        ['celé jinak', 'sein (být)', 'bist', 'ist'],
+        ['celé jinak', 'haben (mít)', 'hast', 'hat'],
+      ],
+    },
+    examples: [
+      ['Du sprichst gut Deutsch.', 'Mluvíš dobře německy.'],
+      ['Er sieht den Drachen.', 'Vidí draka.'],
+      ['Die Katze schläft.', 'Kočka spí.'],
+      ['Ich bin müde, du bist hungrig.', 'Jsem unavený, ty jsi hladový.'],
+    ],
+    tips: [
+      'Změna se týká jen du a er/sie/es – ich, wir, ihr a sie/Sie jsou pravidelné.',
+      'sein: ich bin, du bist, er ist, wir sind, ihr seid, sie sind.',
+      'haben: ich habe, du hast, er hat, wir haben, ihr habt, sie haben.',
+      'U essen a lesen splývá du a er: du isst, er isst; du liest, er liest.',
+    ],
+  },
+
+  perfekt_haben: {
+    summary: 'Minulý čas v řeči: haben + příčestí na konci věty (Ich habe gespielt).',
+    intro: [
+      'V mluvené němčině se o minulosti nejčastěji mluví v perfektu. Skládá se ze dvou částí: tvaru slovesa haben a příčestí minulého.',
+      'haben stojí na druhém místě ve větě a příčestí úplně na konci: Ich habe den Hund gesehen.',
+      'Pravidelná slovesa tvoří příčestí ge- + kmen + -t (spielen → gespielt). Nepravidelná mají -en a často jinou samohlásku (trinken → getrunken).',
+    ],
+    table: {
+      head: ['Infinitiv', 'Příčestí', 'Věta'],
+      rows: [
+        ['spielen (hrát)', 'gespielt', 'Ich habe gespielt.'],
+        ['kaufen (koupit)', 'gekauft', 'Du hast Brot gekauft.'],
+        ['arbeiten (pracovat)', 'gearbeitet', 'Er hat viel gearbeitet.'],
+        ['verkaufen (prodat)', 'verkauft', 'Wir haben das Pferd verkauft.'],
+        ['sehen (vidět)', 'gesehen', 'Ihr habt den Wolf gesehen.'],
+        ['trinken (pít)', 'getrunken', 'Sie haben Bier getrunken.'],
+      ],
+    },
+    examples: [
+      ['Ich habe einen Apfel gegessen.', 'Snědl jsem jablko.'],
+      ['Hast du gut geschlafen?', 'Spal jsi dobře?'],
+      ['Wir haben den Schlüssel gefunden.', 'Našli jsme klíč.'],
+      ['Er hat nichts gesagt.', 'Nic neřekl.'],
+    ],
+    tips: [
+      'Kmen končí na -t nebo -d? Přidá se -et: gearbeitet, gewartet.',
+      'Slovesa s předponou ver-, be- nebo er- nemají ge-: verkauft, bezahlt.',
+      'Nepravidelná příčestí se učí spolu se slovesem: sehen – gesehen, finden – gefunden, nehmen – genommen.',
+      'Slovesa pohybu (gehen, kommen, fahren) tvoří perfektum se sein – to přijde v pozdější lekci.',
+    ],
+  },
+
+  dativ: {
+    summary: 'Ve 3. pádě (komu, s kým, odkud) je člen dem, der, dem.',
+    intro: [
+      'Dativ (3. pád) odpovídá na otázky komu? čemu? – a používá se po některých předložkách a slovesech.',
+      'Člen se ve 3. pádě mění u všech rodů: der → dem, die → der, das → dem (neurčitý: einem, einer, einem).',
+      'Dativ chtějí předložky mit (s), aus (z), von (od), zu (k), bei (u), nach (po) a slovesa jako helfen (pomáhat), geben (dát komu), danken (děkovat).',
+    ],
+    table: {
+      head: ['Rod', '1. pád', '3. pád', 'Příklad'],
+      rows: [
+        ['mužský', 'der / ein', 'dem / einem', 'Ich spiele mit dem Hund.'],
+        ['ženský', 'die / eine', 'der / einer', 'Ich helfe der Oma.'],
+        ['střední', 'das / ein', 'dem / einem', 'Ich komme aus dem Haus.'],
+      ],
+    },
+    examples: [
+      ['Ich gebe dem Kind einen Apfel.', 'Dám dítěti jablko.'],
+      ['Er hilft der Mutter.', 'Pomáhá matce.'],
+      ['Wir kommen aus dem Wald.', 'Jdeme z lesa.'],
+      ['Sie spielt mit einer Katze.', 'Hraje si s kočkou.'],
+    ],
+    tips: [
+      'Pozor: der je v 1. pádě mužský rod, ale ve 3. pádě ženský (der Mutter).',
+      'zu dem se stahuje na zum, zu der na zur, von dem na vom, bei dem na beim: Ich gehe zur Schule.',
+      'helfen má 3. pád stejně jako v češtině (pomáhat komu). Pozor ale: sehen, suchen a finden mají 4. pád – Ich sehe den Hund.',
+    ],
+  },
 };

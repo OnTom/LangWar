@@ -10,9 +10,9 @@ export default {
     { key: 'negation', name: 'Zápor nicht/kein', level: 5, spell: { kind: 'defense', rank: 1 }, ready: true },
     { key: 'akkusativ', name: 'Akuzativ', level: 7, spell: { kind: 'control', rank: 1 }, ready: true },
     { key: 'plural', name: 'Množné číslo', level: 9, spell: { kind: 'attack', rank: 2 }, ready: true },
-    { key: 'unregelmaessig', name: 'Nepravidelná slovesa', level: 11, spell: { kind: 'heal', rank: 2 } },
-    { key: 'perfekt_haben', name: 'Perfektum s haben', level: 13, spell: { kind: 'buff', rank: 1 } },
-    { key: 'dativ', name: 'Dativ', level: 15, spell: { kind: 'control', rank: 2 } },
+    { key: 'unregelmaessig', name: 'Nepravidelná slovesa', level: 11, spell: { kind: 'heal', rank: 2 }, ready: true },
+    { key: 'perfekt_haben', name: 'Perfektum s haben', level: 13, spell: { kind: 'buff', rank: 1 }, ready: true },
+    { key: 'dativ', name: 'Dativ', level: 15, spell: { kind: 'control', rank: 2 }, ready: true },
     { key: 'wortstellung', name: 'Slovosled a otázky', level: 17, spell: { kind: 'defense', rank: 2 } },
     { key: 'adjektive', name: 'Skloňování přídavných jmen', level: 19, spell: { kind: 'attack', rank: 3 } },
     { key: 'modalverben', name: 'Způsobová slovesa', level: 21, spell: { kind: 'heal', rank: 3 } },
@@ -75,6 +75,83 @@ export default {
     ['brauche', 'brauchen', 'potřebovat', ['jidlo', 'mesto', 'rodina']],
     ['esse', 'essen', 'jíst', ['jidlo']],
     ['male', 'malen', 'malovat', ['zvirata', 'priroda', 'rodina', 'mesto']],
+  ],
+
+  // Nepravidelná slovesa v přítomném čase: [infinitiv, význam, tvar pro du, tvar pro er/sie/es]
+  // (ostatní osoby jsou pravidelné); slovesa s úplně nepravidelným časováním mají celou tabulku
+  irregularVerbs: [
+    ['sprechen', 'mluvit', 'sprichst', 'spricht'],
+    ['helfen', 'pomáhat', 'hilfst', 'hilft'],
+    ['geben', 'dávat', 'gibst', 'gibt'],
+    ['nehmen', 'brát', 'nimmst', 'nimmt'],
+    ['essen', 'jíst', 'isst', 'isst'],
+    ['treffen', 'potkat', 'triffst', 'trifft'],
+    ['sehen', 'vidět', 'siehst', 'sieht'],
+    ['lesen', 'číst', 'liest', 'liest'],
+    ['schlafen', 'spát', 'schläfst', 'schläft'],
+    ['fahren', 'jet', 'fährst', 'fährt'],
+    ['laufen', 'běžet', 'läufst', 'läuft'],
+    ['tragen', 'nést', 'trägst', 'trägt'],
+    ['waschen', 'mýt', 'wäschst', 'wäscht'],
+    ['fallen', 'padat', 'fällst', 'fällt'],
+  ],
+  irregularTables: {
+    sein: { cz: 'být', ich: 'bin', du: 'bist', er: 'ist', sie_sg: 'ist', wir: 'sind', ihr: 'seid', sie_pl: 'sind' },
+    haben: { cz: 'mít', ich: 'habe', du: 'hast', er: 'hat', sie_sg: 'hat', wir: 'haben', ihr: 'habt', sie_pl: 'haben' },
+    werden: { cz: 'stát se', ich: 'werde', du: 'wirst', er: 'wird', sie_sg: 'wird', wir: 'werden', ihr: 'werdet', sie_pl: 'werden' },
+    wissen: { cz: 'vědět', ich: 'weiß', du: 'weißt', er: 'weiß', sie_sg: 'weiß', wir: 'wissen', ihr: 'wisst', sie_pl: 'wissen' },
+  },
+
+  // Perfektum s haben: [infinitiv, význam, příčestí minulé, témata předmětů pro věty (null = bez předmětu)]
+  perfectVerbs: [
+    ['spielen', 'hrát', 'gespielt', null],
+    ['kaufen', 'koupit', 'gekauft', ['jidlo', 'mesto']],
+    ['verkaufen', 'prodat', 'verkauft', ['jidlo', 'mesto', 'zvirata']],
+    ['suchen', 'hledat', 'gesucht', ['rodina', 'zvirata', 'mesto', 'priroda']],
+    ['lernen', 'učit se', 'gelernt', null],
+    ['hören', 'slyšet', 'gehört', ['zvirata']],
+    ['sagen', 'říct', 'gesagt', null],
+    ['arbeiten', 'pracovat', 'gearbeitet', null],
+    ['kämpfen', 'bojovat', 'gekämpft', null],
+    ['machen', 'dělat', 'gemacht', null],
+    ['kochen', 'vařit', 'gekocht', ['jidlo']],
+    ['tanzen', 'tančit', 'getanzt', null],
+    ['malen', 'malovat', 'gemalt', ['zvirata', 'priroda', 'rodina', 'mesto']],
+    ['bauen', 'stavět', 'gebaut', ['mesto']],
+    ['warten', 'čekat', 'gewartet', null],
+    ['lachen', 'smát se', 'gelacht', null],
+    ['brauchen', 'potřebovat', 'gebraucht', ['jidlo', 'mesto']],
+    ['sehen', 'vidět', 'gesehen', ['zvirata', 'priroda', 'mesto', 'rodina']],
+    ['essen', 'jíst', 'gegessen', ['jidlo']],
+    ['trinken', 'pít', 'getrunken', null],
+    ['schlafen', 'spát', 'geschlafen', null],
+    ['sprechen', 'mluvit', 'gesprochen', null],
+    ['lesen', 'číst', 'gelesen', null],
+    ['schreiben', 'psát', 'geschrieben', null],
+    ['finden', 'najít', 'gefunden', ['zvirata', 'mesto', 'priroda', 'rodina']],
+    ['nehmen', 'vzít', 'genommen', ['jidlo', 'mesto']],
+    ['helfen', 'pomoci', 'geholfen', null],
+    ['singen', 'zpívat', 'gesungen', null],
+  ],
+
+  // Dativ: kdo může být „s kým / komu“ a odkud se dá „přijít“ (podstatná jména ze slovní zásoby)
+  dativePeople: [
+    'die Mutter', 'der Vater', 'die Schwester', 'der Bruder', 'das Kind', 'der Sohn', 'die Tochter', 'die Oma',
+    'der Opa', 'der Freund', 'die Freundin', 'der Mann', 'die Frau', 'das Baby', 'der König', 'die Königin',
+    'der Ritter', 'die Prinzessin', 'der Lehrer', 'der Arzt', 'der Koch', 'der Bäcker',
+    'der Schmied', 'der Händler', 'der Zauberer', 'die Hexe', 'der Wirt', 'der Jäger', 'der Gast',
+  ],
+  dativeAnimals: ['der Hund', 'die Katze', 'das Pferd', 'die Kuh', 'das Schwein', 'die Ziege', 'die Eule', 'das Kaninchen'],
+
+  // Slabá podstatná jména: ve 4. a 3. pádě mají koncovku -(e)n (den Löwen, dem Prinzen).
+  // Ve cvičeních na pády se zatím nepoužívají, aby věta za mezerou nebyla chybná.
+  weakNouns: [
+    'der Löwe', 'der Hase', 'der Drache', 'der Bär', 'der Prinz', 'der Held', 'der Soldat', 'der Bauer', 'der Nachbar',
+  ],
+  dativePlaces: [
+    'das Haus', 'die Küche', 'das Zimmer', 'der Garten', 'der Wald', 'die Höhle', 'die Stadt', 'das Dorf',
+    'die Schule', 'die Kirche', 'die Burg', 'der Turm', 'das Gasthaus', 'das Krankenhaus', 'der Bahnhof',
+    'das Geschäft', 'die Bank',
   ],
 
   // Množné číslo podstatných jmen ze slovní zásoby (bez členu; v množném čísle je vždy „die“).

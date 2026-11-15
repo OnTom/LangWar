@@ -28,7 +28,7 @@ test('učební plán: 15 lekcí, každý druh kouzla má stupně I–III', () =>
   assert.deepEqual(levels, [...levels].sort((a, b) => a - b), 'lekce jdou podle úrovně');
   assert.deepEqual(
     LESSONS.filter((l) => l.ready).map((l) => l.key),
-    ['artikel', 'praesens', 'negation', 'akkusativ', 'plural']
+    ['artikel', 'praesens', 'negation', 'akkusativ', 'plural', 'unregelmaessig', 'perfekt_haben', 'dativ']
   );
 });
 
@@ -56,7 +56,7 @@ test('každý generátor dává platná cvičení ve všech formátech', () => {
   for (const [lesson, formats] of Object.entries(FORMATS)) {
     for (const format of formats) {
       for (let i = 0; i < 150; i++) {
-        const e = GENERATORS[lesson]({ format, nouns: NOUNS, adjectives: ADJECTIVES, pick: randomPick });
+        const e = GENERATORS[lesson]({ format, nouns: NOUNS, allNouns: NOUNS, adjectives: ADJECTIVES, pick: randomPick });
         const where = `${lesson}/${format}: ${e.prompt}`;
         assert.ok(e.item && e.prompt && e.solution && e.rule && e.instruction, where);
         assert.ok(e.answers.length >= 1, where);
@@ -70,6 +70,41 @@ test('každý generátor dává platná cvičení ve všech formátech', () => {
         if (format !== 'order') assert.match(e.prompt, /___/, where);
       }
     }
+  }
+});
+
+test('nepravidelná slovesa, perfektum a dativ', () => {
+  const ctx = (format) => ({ format, nouns: NOUNS, allNouns: NOUNS, adjectives: ADJECTIVES, pick: randomPick });
+  // Nepravidelná slovesa: kmen se mění jen u du a er/sie/es
+  const seen = new Map();
+  for (let i = 0; i < 600; i++) {
+    const e = GENERATORS.unregelmaessig(ctx('fill'));
+    seen.set(e.solution, e.answers[0]);
+  }
+  for (const [solution] of [['du sprichst'], ['er sieht'], ['du fährst'], ['ihr seid'], ['ich weiß']]) {
+    assert.ok(seen.has(solution), `chybí ${solution}`);
+  }
+  assert.ok(!seen.has('ich spriche') && !seen.has('wir sprichen'));
+  // Perfektum: příčestí
+  const participles = new Set();
+  for (let i = 0; i < 400; i++) participles.add(GENERATORS.perfekt_haben(ctx('fill')).answers[0]);
+  for (const p of ['gespielt', 'gearbeitet', 'verkauft', 'gesehen', 'getrunken']) assert.ok(participles.has(p), p);
+  // Dativ: členy dem / der / einem / einer
+  for (let i = 0; i < 200; i++) {
+    const e = GENERATORS.dativ(ctx('fill'));
+    assert.ok(['dem', 'der', 'einem', 'einer'].includes(e.answers[0]), e.solution);
+  }
+});
+
+test('slabá podstatná jména (den Löwen) se ve cvičeních na pády nepoužívají', () => {
+  const ctx = (format) => ({ format, nouns: NOUNS, allNouns: NOUNS, adjectives: ADJECTIVES, pick: randomPick });
+  for (let i = 0; i < 500; i++) {
+    for (const lesson of ['akkusativ', 'dativ']) {
+      const e = GENERATORS[lesson](ctx('fill'));
+      for (const weak of GRAMMAR.weakNouns) assert.ok(!e.hint.includes(weak), `${lesson}: ${e.solution}`);
+    }
+    const order = GENERATORS.perfekt_haben(ctx('order'));
+    assert.ok(!GRAMMAR.weakNouns.some((w) => order.solution.includes(` ${w.split(' ')[1]} `)), order.solution);
   }
 });
 
@@ -154,7 +189,7 @@ test('gramatický úkol nejde zodpovědět přes slovíčka ani obráceně', asy
 });
 
 test('lekce bez cvičení a neznámý formát', async () => {
-  assert.equal((await api.post(admin, '/grammar/task', { lesson: 'dativ' })).status, 400);
+  assert.equal((await api.post(admin, '/grammar/task', { lesson: 'wortstellung' })).status, 400);
   assert.equal((await api.post(admin, '/grammar/task', { lesson: 'artikel', format: 'order' })).status, 400);
   assert.equal((await api.post(admin, '/grammar/task', { lesson: 'neexistuje' })).status, 400);
 });

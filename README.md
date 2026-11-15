@@ -258,10 +258,12 @@ Návrh kouzel a učebního plánu je v [docs/kouzla.md](docs/kouzla.md).
 - Složená lekce = kouzlo nebo jeho vyšší stupeň; **kniha kouzel** má 4 sloty (nové kouzlo se samo nasadí, když je místo).
   Naučené lekce jde dál procvičovat
 - **Kouzla** (`server/data/spells.js`): 5 druhů (útok, léčení, obrana, kontrola, posílení) ve 3 stupních
-  s absolutní silou; každé povolání má vlastní kouzla (např. mág Ohnivá koule, lovec Otrávený šíp)
+  s absolutní silou; každé povolání má vlastní kouzla (např. mág Ohnivá koule, lovec Otrávený šíp).
+  Hráči si zatím můžou zvolit jen **mága** (`ENABLED_CLASSES`), válečník a lovec jsou „připravujeme“
 - Učební plán němčiny (15 lekcí) a data pro cvičení: `server/data/grammar/de.js`; texty lekcí:
   `server/data/grammar/de-lessons.js`; generátory cvičení: `server/game/grammar/de.js`.
-  Hotové jsou lekce 1–5: člen der/die/das, přítomný čas, zápor nicht/kein, akuzativ, množné číslo
+  Hotové jsou lekce 1–8: člen der/die/das, přítomný čas, zápor nicht/kein, akuzativ, množné číslo,
+  nepravidelná slovesa, perfektum s haben, dativ (zbylých 7 je v plánu jako „připravuje se“)
 - Formáty cvičení: **výběr z možností** (15 s), **doplnění** (25 s), **skládání věty z kartiček** (30 s)
 - Cvičení se skládají ze slovíček z odemčených lokací; velikost písmen, diakritika i přehlásky musí sedět
 - Po chybě hráč uvidí správnou větu a krátké pravidlo; chybné položky se opakují častěji (`grammar_stats`)

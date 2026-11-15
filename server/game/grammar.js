@@ -127,6 +127,7 @@ export function createGrammarTask(
   const exercise = LANG.generators[lesson.key]({
     format: chosen,
     nouns,
+    allNouns: NOUNS,
     adjectives: ADJECTIVES,
     pick: makePicker(characterId, lesson.key),
   });

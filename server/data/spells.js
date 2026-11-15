@@ -55,7 +55,7 @@ function effectText(cls, kind, rank) {
     case 'control':
       return rank === 1 ? 'Nepřítel vynechá příští tah' : `Nepřítel vynechá příští tah a utrží ${range(power)} poškození`;
     default:
-      return `Dalších ${BUFF_ATTACKS[rank]} útoků zasáhne o ${range(power)} silněji`;
+      return `Další ${BUFF_ATTACKS[rank]} útoky zasáhnou o ${range(power)} silněji`;
   }
 }
 

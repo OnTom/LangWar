@@ -11,6 +11,7 @@ Dohodnutá pravidla pro kouzla s gramatikou. Čísla jsou výchozí a doladí se
   Protože životy a poškození s úrovní rostou, starší stupně kouzel postupně slábnou
   a hráč má důvod učit se dál.
 - Všichni hráči se učí **stejnou gramatiku**, ale každé povolání má **vlastní kouzla**.
+  Zatím je hratelný jen **mág**; válečník a lovec jsou připravení a zapnou se přepínačem `ENABLED_CLASSES`.
 - Hra bude pro víc jazyků: **kouzla a jejich účinky jsou společné**, pod nimi je gramatika daného jazyka.
 
 ## Kouzla podle povolání
@@ -125,10 +126,10 @@ a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 ## Postup
 
 1. ✅ Nové měřítko soubojů, útoky oběma směry, velká písmena
-2. ✅ Gramatický engine: učební plán po jazycích, generátory cvičení (zatím lekce 1–5), kontrola, sledování chyb
+2. ✅ Gramatický engine: učební plán po jazycích, generátory cvičení, kontrola, sledování chyb
 3. ✅ Knihovna: lekce, nákup za zlato, zkouška, kniha kouzel se 4 sloty
 4. ✅ Kouzla v boji: účinky, mana, selhání
 5. ✅ Kouzlící nepřátelé a aréna
-6. Obsah prvních 5 lekcí, testy, vyvážení
+6. ✅ Obsah lekcí 1–8 (všech pět druhů kouzel, Útok/Léčení/Kontrola až do stupně II), testy, vyvážení
 
 Administrace (menu 🛠️ Admin) umí naučit lekci bez zkoušky, naučit všechny hotové lekce a vše zapomenout.
