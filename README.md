@@ -169,8 +169,10 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
   Směr překladu se u obou útoků náhodně střídá (do češtiny i do němčiny):
   - 🗡️ **Lehký útok**: výběr ze 4 možností (10 s), síla ×0,7
   - 🪓 **Těžký útok**: psaný překlad (15 s), síla ×1
-- Pak útočí nepřítel; hrdinova obrana (štít válečníka, úhyb lovce) i zbroj platí.
-  Nepřítel s manou občas sešle kouzlo, kterému se nedá uhnout.
+- Pak táhne nepřítel: útočí (hrdinova obrana – štít válečníka, úhyb lovce – i zbroj platí), nebo kouzlí.
+  Nepřátelé umí kouzla svého povolání se stupni podle úrovně (monstrum 2, boss 3, gladiátor 3; soupeř v aréně
+  přesně ta, která se skutečný hráč naučil a nasadil). Kouzlo jim vyjde v 75 % případů; léčí se při nízkých
+  životech, staví štíty, posilují se a útočí kouzly. Jejich kontrola hrdinu **zmate**: příští úkol má jen 60 % času
 - ✨ **Kouzla** z knihovny (nejvýš 4 nasazená): hráč zaplatí manu a splní cvičení z gramatiky kouzla
   (výběr 15 s, doplnění 25 s, skládání věty 30 s). Správně = účinek, chyba = kouzlo selže a vrátí se 20 % many.
   Účinky mají pevnou sílu podle stupně: zásah (mág; válečníkovi ho nesníží zbroj; lovec část poškození jedem
@@ -190,7 +192,7 @@ Souboj řídí hráč (`server/game/battle.js`, ukládání a odměny v `server/
 
 - Lokace se odemyká úrovní postavy; nepřátelé mají úroveň lokace, ale nikdy nižší než hrdina
 - Hráč klikne na lokaci, hrdina tam dojde (bez čekání) a může hned bojovat s vybraným nebo náhodným nepřítelem
-- Po 5 výhrách v lokaci se ukáže **boss**: o úroveň výš, víc životů a silnější útok,
+- Po 5 výhrách v lokaci se ukáže **boss**: o úroveň výš, víc životů (1,3×), silnější útok a 3 kouzla,
   ale trojnásobná odměna a vždy předmět (s vyšší šancí na vzácnost); pak se musí znovu „nabít“
 - Novou lokaci přidáš úpravou `locations.js` (témata musí existovat ve slovní zásobě)
 

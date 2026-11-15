@@ -196,17 +196,22 @@ export function maxMana(f) {
 export const MANA_REGEN = 3;
 
 export const BATTLE_CRIT_MULTIPLIER = 1.5;
-export const ENEMY_SPELL_POWER = 1.4; // kouzlo nepřítele: silnější a nedá se vykrýt ani mu uhnout
-export const ENEMY_SPELL_COST = 15;
+export const ENEMY_SPELL_SUCCESS = 75; // % kouzel nepřítele, která vyjdou (i nepřátelé se pletou)
+export const DAZE_TIME_FACTOR = 0.6; // zmatený hrdina (kouzlo kontroly nepřítele) má na příští úkol méně času
 export const BATTLE_ITEM_CHANCE = 10; // % vítězství, za která padne předmět
 
 // Boss lokace: objeví se po několika výhrách v lokaci, je silnější a dá větší odměnu i jistý předmět
 export const BOSS_WINS_REQUIRED = 5;
 export const BOSS_LEVEL_BONUS = 1;
-export const BOSS_HP = 1.5;
+export const BOSS_HP = 1.3; // boss se navíc léčí a staví štíty
 export const BOSS_DAMAGE = 1.2;
 export const BOSS_REWARD = 3;
 export const BOSS_RARITY_BOOST = 15;
+
+// Kolik kouzel umí nepřítel řízený počítačem (stupně podle úrovně)
+export const MONSTER_SPELLS = 2;
+export const BOSS_SPELLS = 3;
+export const GLADIATOR_SPELLS = 3;
 
 // Odměna za vítězný souboj: zhruba 10 vítězství na úroveň
 export function battleReward(level) {

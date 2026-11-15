@@ -17,43 +17,56 @@ function barsHtml(side, f) {
     </div>`;
 }
 
-// Stavy z kouzel (štít, posílení, omráčení, jed) pod ukazateli
+// Stavy z kouzel (štít, posílení, omráčení, zmatení, jed) pod ukazateli
 function statusHtml(f) {
   const chips = [];
   if (f.shield) chips.push(`🛡️ štít ${f.shield}`);
   if (f.empower) chips.push(`💪 +${f.empower.bonus} (${f.empower.attacks}×)`);
   if (f.stunned) chips.push('💫 omráčení');
+  if (f.dazed) chips.push('😵 zmatení: méně času');
   if (f.poison) chips.push(`☠️ jed ${f.poison.perTurn} (${f.poison.turns}×)`);
   return chips.map((c) => `<span class="status-chip">${c}</span>`).join('');
 }
 
+const absorbedText = (e) => (e.absorbed ? ` (štít pohltil ${e.absorbed})` : '');
+
+// Účinek kouzla slovy – z pohledu hrdiny (sesílá hrdina) nebo nepřítele
 const SPELL_TEXT = {
-  damage: (e) => `zásah za ${e.damage}${e.poison ? ` a jed (${e.poison.perTurn} za kolo)` : ''}`,
-  heal: (e) => `léčí ${e.heal} životů`,
-  shield: (e) => `štít pohltí ${e.shield} poškození`,
-  stun: (e) => `nepřítel vynechá tah${e.damage ? ` a dostane ${e.damage}` : ''}`,
-  buff: (e) => `další ${e.attacks} útoky silnější o ${e.bonus}`,
+  hero: {
+    damage: (e) => `zásah za ${e.damage}${e.poison ? ` a jed (${e.poison.perTurn} za kolo)` : ''}${absorbedText(e)}`,
+    heal: (e) => `léčí ${e.heal} životů`,
+    shield: (e) => `štít pohltí ${e.shield} poškození`,
+    stun: (e) => `nepřítel vynechá tah${e.damage ? ` a dostane ${e.damage}` : ''}`,
+    buff: (e) => `další ${e.attacks} útoky silnější o ${e.bonus}`,
+  },
+  enemy: {
+    damage: (e) => `zásah za ${e.damage}${e.poison ? ` a jed (${e.poison.perTurn} za kolo)` : ''}${absorbedText(e)}`,
+    heal: (e) => `léčí se o ${e.heal} životů`,
+    shield: (e) => `štít mu pohltí ${e.shield} poškození`,
+    daze: (e) => `zmatení – příští úkol máš na méně času${e.damage ? `, zásah za ${e.damage}` : ''}`,
+    buff: (e) => `jeho další ${e.attacks} útoky budou silnější o ${e.bonus}`,
+  },
 };
 
 function describe(e, battle) {
   const action = battle.actions.find((a) => a.key === e.action) ?? { name: 'Útok', icon: '⚔️' };
-  if (e.type === 'fizzle') return `💨 ${e.spell.icon} ${e.spell.name}: kouzlo selhalo (vráceno ${e.refund} many).`;
-  if (e.type === 'spell') return `✨ ${e.spell.icon} ${e.spell.name} ${e.spell.rankName}: ${SPELL_TEXT[e.effect](e)}.`;
-  if (e.type === 'poison') return `☠️ Jed pálí nepřítele za ${e.damage}.`;
-  if (e.type === 'stunned') return `💫 Omráčení: ${battle.enemy.name} vynechává tah.`;
+  const enemy = battle.enemy.name;
+  if (e.type === 'stunned') return `💫 Omráčení: ${enemy} vynechává tah.`;
+  if (e.type === 'poison') return e.actor === 'hero' ? `☠️ Jed pálí nepřítele za ${e.damage}.` : `☠️ Jed tě pálí za ${e.damage}.`;
   if (e.actor === 'hero') {
+    if (e.type === 'fizzle') return `💨 ${e.spell.icon} ${e.spell.name}: kouzlo selhalo (vráceno ${e.refund} many).`;
+    if (e.type === 'spell') return `✨ ${e.spell.icon} ${e.spell.name} ${e.spell.rankName}: ${SPELL_TEXT.hero[e.effect](e)}.`;
     const bonus = e.bonus ? ` (posíleno +${e.bonus})` : '';
     if (e.type === 'miss') return `❌ ${action.name}: vedle – slovo nevyšlo.`;
-    if (e.type === 'crit') return `💥 ${action.name}: kritický zásah za ${e.damage}${bonus}!`;
-    return `${action.icon} ${action.name}: zásah za ${e.damage}${bonus}.`;
+    if (e.type === 'crit') return `💥 ${action.name}: kritický zásah za ${e.damage}${bonus}${absorbedText(e)}!`;
+    return `${action.icon} ${action.name}: zásah za ${e.damage}${bonus}${absorbedText(e)}.`;
   }
-  const enemy = battle.enemy.name;
+  if (e.type === 'fizzle') return `💨 ${enemy}: ${e.spell.icon} ${e.spell.name} se nepovedlo.`;
+  if (e.type === 'spell') return `🔮 ${enemy} sesílá ${e.spell.icon} ${e.spell.name} ${e.spell.rankName}: ${SPELL_TEXT.enemy[e.effect](e)}.`;
   if (e.type === 'evade') return `💨 Uhýbáš útoku.`;
   if (e.type === 'block') return `🛡️ Vykrýváš útok štítem.`;
-  const spell = e.action === 'spell';
-  const absorbed = e.absorbed ? ` (štít pohltil ${e.absorbed})` : '';
-  if (e.type === 'crit') return `💥 ${enemy} ${spell ? 'sesílá ničivé kouzlo' : 'kriticky zasahuje'} za ${e.damage}${absorbed}!`;
-  return spell ? `🔥 ${enemy} sesílá kouzlo za ${e.damage}${absorbed}.` : `👊 ${enemy} útočí za ${e.damage}${absorbed}.`;
+  if (e.type === 'crit') return `💥 ${enemy} kriticky zasahuje za ${e.damage}${absorbedText(e)}!`;
+  return `👊 ${enemy} útočí za ${e.damage}${absorbedText(e)}.`;
 }
 
 /**
@@ -83,6 +96,13 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
         <div class="battle-turn"></div>
         ${barsHtml('enemy', battle.enemy)}
       </div>
+      ${
+        battle.enemySpells?.length
+          ? `<div class="enemy-spells">Nepřítel umí: ${battle.enemySpells
+              .map((sp) => `<span title="${escapeHtml(sp.effect)}">${sp.icon} ${escapeHtml(sp.name)} ${sp.rankName}</span>`)
+              .join(' · ')}</div>`
+          : ''
+      }
       <div class="battle-stage">
         <div class="battle-fighter battle-fighter-hero"><span class="fighter-avatar">${battle.hero.avatar}</span><span class="battle-float"></span></div>
         <div class="battle-location">${battle.location.icon} ${escapeHtml(battle.location.name)}</div>
@@ -139,18 +159,20 @@ export function showBattle(el, initial, { onEnd, onCharacter, onAgain, onLeave }
 
   // Zásah, kouzlo, jed…: číslo nad bojovníkem a případně zatřesení
   function animate(e) {
-    if (e.type === 'fizzle') return float('hero', '💨 selhalo', 'miss');
+    const self = e.actor; // kdo jedná
+    const foe = self === 'hero' ? 'enemy' : 'hero';
+    if (e.type === 'fizzle') return float(self, '💨 selhalo', 'miss');
     if (e.type === 'stunned') return float('enemy', '💫', 'miss');
-    if (e.type === 'poison') return float('enemy', `☠️ -${e.damage}`, 'poison', true);
+    if (e.type === 'poison') return float(foe, `☠️ -${e.damage}`, 'poison', true);
     if (e.type === 'spell') {
-      if (e.effect === 'heal') return float('hero', `+${e.heal}`, 'heal');
-      if (e.effect === 'shield') return float('hero', `🛡️ ${e.shield}`, 'heal');
-      if (e.effect === 'buff') return float('hero', `💪 +${e.bonus}`, 'heal');
-      return float('enemy', e.damage ? `✨ -${e.damage}` : '💫', 'spell', e.damage > 0);
+      if (e.effect === 'heal') return float(self, `+${e.heal}`, 'heal');
+      if (e.effect === 'shield') return float(self, `🛡️ ${e.shield}`, 'heal');
+      if (e.effect === 'buff') return float(self, `💪 +${e.bonus}`, 'heal');
+      const icon = e.effect === 'daze' ? '😵' : e.effect === 'stun' ? '💫' : '✨';
+      return float(foe, e.damage ? `${icon} -${e.damage}` : icon, 'spell', e.damage > 0);
     }
-    const target = e.actor === 'hero' ? 'enemy' : 'hero';
     const text = e.damage > 0 ? `-${e.damage}` : e.absorbed ? '🛡️' : { miss: 'vedle', evade: 'uhnul', block: 'blok' }[e.type];
-    float(target, text, e.type, e.damage > 0);
+    float(foe, text, e.type, e.damage > 0);
   }
 
   function spellsHtml() {

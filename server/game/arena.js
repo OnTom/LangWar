@@ -9,6 +9,7 @@ import {
   ARENA_OPPONENTS,
   ARENA_COOLDOWN,
   ARENA_DAILY_XP_WINS,
+  GLADIATOR_SPELLS,
   honorTransfer,
   arenaGold,
   arenaXp,
@@ -17,7 +18,7 @@ import { findCharacter, findCharacterById, characterCombatProfile, rankOf, today
 import { progressDaily } from './daily.js';
 import { createMonster } from './monsters.js';
 import { createBattle } from './battle.js';
-import { battleSpells } from './library.js';
+import { battleSpells, npcSpells } from './library.js';
 
 const HISTORY_SIZE = 10;
 
@@ -74,12 +75,15 @@ function resolveOpponent(o, c) {
     return {
       view: { type: 'npc', name: g.name, avatar: g.avatar, className: CLASSES[g.class].name, level: c.level, honor: null },
       profile: () => createMonster({ name: g.name, icon: g.avatar, cls: g.class, level: c.level }),
+      spells: () => npcSpells(g.class, c.level, GLADIATOR_SPELLS),
     };
   }
   const p = findCharacterById(o.id);
   return {
     view: { type: 'player', name: p.name, avatar: p.avatar, className: CLASSES[p.class].name, level: p.level, honor: p.honor },
     profile: () => ({ ...characterCombatProfile(p), name: p.name, avatar: p.avatar }),
+    // Za skutečného hráče kouzlí počítač jeho naučenými a nasazenými kouzly
+    spells: () => battleSpells(p),
   };
 }
 
@@ -142,7 +146,9 @@ export function startArenaBattle(c, index) {
   if (!chosen) throw new ArenaError('Takový soupeř v aréně nestojí.', 404);
 
   const opponent = resolveOpponent(chosen, c);
-  const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, opponent.profile());
+  const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, opponent.profile(), {
+    enemySpells: opponent.spells(),
+  });
   state.kind = 'arena';
   state.location = { key: 'arena', name: 'Aréna', icon: '🏟️' };
   state.topics = unlockedTopics(c.level); // slovíčka ze všech odemčených lokací

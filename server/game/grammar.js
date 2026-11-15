@@ -90,7 +90,7 @@ function publicTask(row) {
     to: 'de',
     options: data.options ?? null,
     tiles: data.tiles ?? null,
-    timeLimit: GRAMMAR_FORMATS[data.format].timeLimit,
+    timeLimit: data.timeLimit ?? GRAMMAR_FORMATS[data.format].timeLimit,
     untimed: Boolean(data.untimed),
     expiresAt: row.expires_at,
     serverNow: Date.now(),
@@ -114,7 +114,7 @@ function adminSolution(exercise) {
  */
 export function createGrammarTask(
   characterId,
-  { lesson: lessonKey, format = null, topics = null, context = 'grammar', untimed = false }
+  { lesson: lessonKey, format = null, topics = null, context = 'grammar', untimed = false, timeScale = 1 }
 ) {
   const lesson = getLesson(lessonKey);
   if (!lesson?.ready) throw new TaskError('Tahle lekce zatím nemá cvičení.');
@@ -135,7 +135,9 @@ export function createGrammarTask(
   db.prepare('DELETE FROM lingo_tasks WHERE created_at < ?').run(now - TASK_TTL_MS);
   db.prepare('DELETE FROM lingo_tasks WHERE character_id = ? AND context = ? AND answered_at IS NULL').run(characterId, context);
 
-  const data = { lesson: lesson.key, format: chosen, untimed, ...exercise, adminSolution: adminSolution(exercise) };
+  // timeScale < 1 = méně času (zmatení v souboji)
+  const timeLimit = Math.max(5, Math.round(GRAMMAR_FORMATS[chosen].timeLimit * timeScale));
+  const data = { lesson: lesson.key, format: chosen, untimed, timeLimit, ...exercise, adminSolution: adminSolution(exercise) };
   const id = crypto.randomBytes(12).toString('hex');
   db.prepare(
     `INSERT INTO lingo_tasks (id, character_id, word_id, type, context, data, created_at, expires_at)
@@ -148,7 +150,7 @@ export function createGrammarTask(
     context,
     JSON.stringify(data),
     now,
-    now + (untimed ? UNTIMED_MS : GRAMMAR_FORMATS[chosen].timeLimit * 1000)
+    now + (untimed ? UNTIMED_MS : timeLimit * 1000)
   );
   return publicTask(db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(id));
 }

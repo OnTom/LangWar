@@ -1,5 +1,5 @@
 // Tahový souboj řízený hráčem – čistá logika bez databáze.
-// Hráč zvolí útok, splní jazykový úkol (správně = zásah) a pak útočí nepřítel.
+// Hráč zvolí útok nebo kouzlo, splní jazykový úkol (správně = zásah) a pak táhne nepřítel.
 import {
   CLASSES,
   BATTLE_ACTIONS,
@@ -12,8 +12,7 @@ import {
   BOSS_HP,
   BOSS_DAMAGE,
   BATTLE_CRIT_MULTIPLIER,
-  ENEMY_SPELL_POWER,
-  ENEMY_SPELL_COST,
+  ENEMY_SPELL_SUCCESS,
   MANA_REGEN,
   beginnerDamageScale,
   parHp,
@@ -88,8 +87,11 @@ function fighter(f, opponent, side) {
   };
 }
 
-/** Nový souboj: hero = bojový profil postavy, monster = profil monstra nebo soupeře v aréně. */
-export function createBattle(hero, monster, { boss = false } = {}) {
+/**
+ * Nový souboj: hero = bojový profil postavy, monster = profil monstra nebo soupeře v aréně,
+ * enemySpells = kouzla nepřítele (podle povolání a úrovně, u hráče v aréně jeho nasazená).
+ */
+export function createBattle(hero, monster, { boss = false, enemySpells = [] } = {}) {
   const h = fighter(hero, monster, 'hero');
   const e = fighter(monster, hero, 'enemy');
   if (boss) e.maxHp = e.hp = Math.round(e.maxHp * BOSS_HP);
@@ -98,7 +100,7 @@ export function createBattle(hero, monster, { boss = false } = {}) {
     min: Math.max(1, Math.round(e.damage.min * damageScale)),
     max: Math.max(1, Math.round(e.damage.max * damageScale)),
   };
-  return { v: 2, hero: h, enemy: { ...e, boss }, turn: 1, log: [] };
+  return { v: 2, hero: h, enemy: { ...e, boss, spells: enemySpells }, turn: 1, log: [] };
 }
 
 function rollDamage(att, def, power) {
@@ -134,16 +136,25 @@ export function payForAction(state, action) {
   if (spell) state.hero.mana -= spell.mana;
 }
 
-// Posílení: bonus k dalším zásahům hrdiny (útoky i útočná kouzla); spotřebuje se jen zásahem
-function empowerBonus(hero) {
-  if (!hero.empower?.attacks) return 0;
-  const { bonus } = hero.empower;
-  hero.empower.attacks--;
-  if (hero.empower.attacks === 0) hero.empower = null;
+// Posílení: bonus k dalším zásahům (útoky i útočná kouzla); spotřebuje se jen zásahem
+function empowerBonus(fighter) {
+  if (!fighter.empower?.attacks) return 0;
+  const { bonus } = fighter.empower;
+  fighter.empower.attacks--;
+  if (fighter.empower.attacks === 0) fighter.empower = null;
   return bonus;
 }
 
+// Štít pohltí část poškození (z útoků i útočných kouzel; jed štítem projde)
+function hitThroughShield(target, damage) {
+  const absorbed = Math.min(target.shield ?? 0, damage);
+  if (absorbed) target.shield -= absorbed;
+  target.hp = Math.max(0, target.hp - (damage - absorbed));
+  return { damage: damage - absorbed, absorbed };
+}
+
 const hp = (state) => ({ heroHp: state.hero.hp, enemyHp: state.enemy.hp });
+const other = (side) => (side === 'hero' ? 'enemy' : 'hero');
 
 // Útok hrdiny po vyhodnocení úkolu. Správná odpověď vždy zasáhne.
 function heroAttack(state, action, correct) {
@@ -152,103 +163,122 @@ function heroAttack(state, action, correct) {
   if (!correct) return { ...entry, type: 'miss', damage: 0, hpLeft: enemy.hp, ...hp(state) };
   const { damage: rolled, crit } = rollDamage(hero, enemy, BATTLE_ACTIONS[action].power);
   const bonus = empowerBonus(hero);
-  const damage = rolled + bonus;
-  enemy.hp = Math.max(0, enemy.hp - damage);
-  return { ...entry, type: crit ? 'crit' : 'hit', damage, bonus, hpLeft: enemy.hp, ...hp(state) };
+  const { damage, absorbed } = hitThroughShield(enemy, rolled + bonus);
+  return { ...entry, type: crit ? 'crit' : 'hit', damage, absorbed, bonus, hpLeft: enemy.hp, ...hp(state) };
 }
 
-// Kouzlo hrdiny: správně = účinek podle druhu a stupně (absolutní síla), chyba = selže
-function castSpell(state, spell, correct) {
-  const { hero, enemy } = state;
+/**
+ * Kouzlo hrdiny nebo nepřítele: správně (u nepřítele podle šance) = účinek podle druhu a stupně
+ * (absolutní síla), jinak selže a vrátí se část many. side = kdo kouzlí ('hero' | 'enemy').
+ */
+function castSpell(state, side, spell, success) {
+  const caster = state[side];
+  const target = state[other(side)];
   const entry = {
     turn: state.turn,
-    actor: 'hero',
+    actor: side,
     action: spell.key,
     spell: { kind: spell.kind, name: spell.name, icon: spell.icon, rankName: spell.rankName },
-    correct,
+    correct: success,
   };
-  if (!correct) {
+  if (!success) {
     const refund = Math.round(spell.mana * SPELL_FAIL_REFUND);
-    hero.mana = Math.min(hero.maxMana, hero.mana + refund);
-    return { ...entry, type: 'fizzle', refund, damage: 0, hpLeft: enemy.hp, ...hp(state) };
+    caster.mana = Math.min(caster.maxMana, caster.mana + refund);
+    return { ...entry, type: 'fizzle', refund, damage: 0, hpLeft: state.enemy.hp, ...hp(state) };
   }
   const power = SPELL_POWER[spell.kind][spell.rank];
-  const done = (effect) => ({ ...entry, type: 'spell', ...effect, hpLeft: enemy.hp, ...hp(state) });
+  // Kouzla nepřátel bijí začínající hrdiny slaběji (stejně jako jejich útoky)
+  const scale = side === 'enemy' ? beginnerDamageScale(state.hero.level) : 1;
+  const done = (effect) => ({ ...entry, type: 'spell', ...effect, hpLeft: state.enemy.hp, ...hp(state) });
 
   switch (spell.kind) {
     case 'attack': {
-      let damage = rollRange(power);
+      let damage = rollRange(power) * scale;
       let poison = null;
-      if (hero.class === 'scout') {
+      if (caster.class === 'scout') {
         // Otrávený šíp: polovina hned, zbytek jedem v dalších kolech (jed dá celkem víc)
         const total = Math.round(damage * POISON_BONUS);
         damage = Math.round(total * (1 - POISON_SHARE));
         poison = { perTurn: Math.ceil((total - damage) / POISON_TURNS), turns: POISON_TURNS };
-        enemy.poison = poison;
-      } else if (hero.class === 'mage') {
-        damage = Math.round(damage * (1 - enemy.armorReduction / 100)); // válečníkovi zbroj nevadí
+        target.poison = poison;
+      } else if (caster.class === 'mage') {
+        damage = damage * (1 - target.armorReduction / 100); // válečníkovi zbroj nevadí
       }
-      damage = Math.max(1, damage + empowerBonus(hero));
-      enemy.hp = Math.max(0, enemy.hp - damage);
-      return done({ effect: 'damage', damage, poison });
+      const hit = hitThroughShield(target, Math.max(1, Math.round(damage) + empowerBonus(caster)));
+      return done({ effect: 'damage', ...hit, poison });
     }
     case 'heal': {
-      const heal = Math.min(rollRange(power), hero.maxHp - hero.hp);
-      hero.hp += heal;
+      const heal = Math.min(rollRange(power), caster.maxHp - caster.hp);
+      caster.hp += heal;
       return done({ effect: 'heal', heal, damage: 0 });
     }
     case 'defense': {
       const shield = rollRange(power);
-      hero.shield = (hero.shield ?? 0) + shield;
+      caster.shield = (caster.shield ?? 0) + shield;
       return done({ effect: 'shield', shield, damage: 0 });
     }
     case 'control': {
-      const damage = spell.rank > 1 ? rollRange(power) : 0;
-      enemy.stunned = true;
-      enemy.hp = Math.max(0, enemy.hp - damage);
-      return done({ effect: 'stun', damage });
+      // Hrdina omráčí nepřítele (vynechá tah); nepřítel hrdinu zmate (příští úkol má méně času)
+      if (side === 'hero') target.stunned = true;
+      else target.dazed = true;
+      const hit = spell.rank > 1 ? hitThroughShield(target, Math.round(rollRange(power) * scale)) : { damage: 0, absorbed: 0 };
+      return done({ effect: side === 'hero' ? 'stun' : 'daze', ...hit });
     }
     default: {
       const bonus = rollRange(power);
-      hero.empower = { bonus, attacks: BUFF_ATTACKS[spell.rank] };
+      caster.empower = { bonus, attacks: BUFF_ATTACKS[spell.rank] };
       return done({ effect: 'buff', bonus, attacks: BUFF_ATTACKS[spell.rank], damage: 0 });
     }
   }
 }
 
-// Tah nepřítele: omráčený vynechá; jinak útočí, když má manu, občas sešle kouzlo
-// (nedá se mu uhnout ani ho vykrýt). Štít hrdiny pohltí část poškození.
-function enemyAttack(state) {
+// Rozhodnutí nepřítele, jestli kouzlit: léčí se při nízkých životech, jinak občas útočí kouzlem,
+// zmate hrdinu, postaví štít nebo se posílí
+function enemyChooseSpell(state) {
+  const { enemy, hero } = state;
+  const usable = (enemy.spells ?? []).filter((s) => s.mana <= enemy.mana);
+  const find = (kind) => usable.find((s) => s.kind === kind);
+  const heal = find('heal');
+  if (heal && enemy.hp < enemy.maxHp * 0.4 && chance(80)) return heal;
+  const options = [
+    [find('attack'), 30],
+    [!hero.dazed && find('control'), 15],
+    [!enemy.shield && find('defense'), 15],
+    [!enemy.empower && find('buff'), 15],
+  ];
+  for (const [spell, percent] of options) if (spell && chance(percent)) return spell;
+  return null;
+}
+
+// Tah nepřítele: omráčený vynechá; jinak kouzlo (vyjde jen s určitou šancí), nebo útok.
+// Útoku jde uhnout nebo ho vykrýt, kouzlu ne; štít hrdiny pohltí část poškození.
+function enemyTurn(state) {
   const { hero, enemy } = state;
   if (enemy.stunned) {
     enemy.stunned = false;
     return { turn: state.turn, actor: 'enemy', action: 'stunned', type: 'stunned', damage: 0, hpLeft: hero.hp, ...hp(state) };
   }
-  const cost = ENEMY_SPELL_COST;
-  const spell = enemy.mana >= cost && chance(CLASSES[enemy.class].unblockable ? 60 : 30);
-  const entry = { turn: state.turn, actor: 'enemy', action: spell ? 'spell' : 'attack' };
+  const spell = enemyChooseSpell(state);
   if (spell) {
-    enemy.mana -= cost;
-  } else {
-    if (chance(hero.evade)) return { ...entry, type: 'evade', damage: 0, hpLeft: hero.hp, ...hp(state) };
-    if (chance(hero.block)) return { ...entry, type: 'block', damage: 0, hpLeft: hero.hp, ...hp(state) };
+    enemy.mana -= spell.mana;
+    return castSpell(state, 'enemy', spell, chance(ENEMY_SPELL_SUCCESS));
   }
-  const { damage, crit } = rollDamage(enemy, hero, spell ? ENEMY_SPELL_POWER : 1);
-  const absorbed = Math.min(hero.shield ?? 0, damage);
-  if (absorbed) hero.shield -= absorbed;
-  if (!hero.shield) hero.shield = 0;
-  hero.hp = Math.max(0, hero.hp - (damage - absorbed));
-  return { ...entry, type: crit ? 'crit' : 'hit', damage: damage - absorbed, absorbed, hpLeft: hero.hp, ...hp(state) };
+  const entry = { turn: state.turn, actor: 'enemy', action: 'attack' };
+  if (chance(hero.evade)) return { ...entry, type: 'evade', damage: 0, hpLeft: hero.hp, ...hp(state) };
+  if (chance(hero.block)) return { ...entry, type: 'block', damage: 0, hpLeft: hero.hp, ...hp(state) };
+  const { damage: rolled, crit } = rollDamage(enemy, hero, 1);
+  const { damage, absorbed } = hitThroughShield(hero, rolled + empowerBonus(enemy));
+  return { ...entry, type: crit ? 'crit' : 'hit', damage, absorbed, hpLeft: hero.hp, ...hp(state) };
 }
 
-// Jed z Otráveného šípu působí na konci kola
-function poisonTick(state) {
-  const { enemy } = state;
-  const damage = Math.min(enemy.poison.perTurn, enemy.hp);
-  enemy.hp -= damage;
-  enemy.poison.turns--;
-  if (enemy.poison.turns <= 0) enemy.poison = null;
-  return { turn: state.turn, actor: 'hero', action: 'poison', type: 'poison', damage, hpLeft: enemy.hp, ...hp(state) };
+// Jed z Otráveného šípu působí na konci kola (side = kdo jed způsobil)
+function poisonTick(state, side) {
+  const target = state[other(side)];
+  const damage = Math.min(target.poison.perTurn, target.hp);
+  target.hp -= damage;
+  target.poison.turns--;
+  if (target.poison.turns <= 0) target.poison = null;
+  return { turn: state.turn, actor: side, action: 'poison', type: 'poison', damage, hpLeft: state.enemy.hp, ...hp(state) };
 }
 
 function regenerate(f) {
@@ -256,23 +286,28 @@ function regenerate(f) {
 }
 
 /**
- * Odehraje celé kolo: útok nebo kouzlo hrdiny podle výsledku úkolu, odpověď nepřítele a jed.
+ * Odehraje celé kolo: útok nebo kouzlo hrdiny podle výsledku úkolu, tah nepřítele a jed.
  * Mění state; vrací { events, outcome } – outcome je 'won', 'lost' nebo null (boj pokračuje).
  */
 export function playRound(state, action, { correct, word = null }) {
   const spell = spellOf(state, action);
-  const first = spell ? castSpell(state, spell, correct) : heroAttack(state, action, correct);
+  const first = spell ? castSpell(state, 'hero', spell, correct) : heroAttack(state, action, correct);
   const events = [{ ...first, word }];
   let outcome = null;
   if (state.enemy.hp === 0) {
     outcome = 'won';
   } else {
-    events.push(enemyAttack(state));
+    events.push(enemyTurn(state));
     if (state.hero.hp === 0) outcome = 'lost';
-    else if (state.enemy.poison) {
-      events.push(poisonTick(state));
-      if (state.enemy.hp === 0) outcome = 'won';
-    }
+  }
+  // Jed na konci kola: nejdřív ten na nepříteli, pak na hrdinovi
+  if (!outcome && state.enemy.poison) {
+    events.push(poisonTick(state, 'hero'));
+    if (state.enemy.hp === 0) outcome = 'won';
+  }
+  if (!outcome && state.hero.poison) {
+    events.push(poisonTick(state, 'enemy'));
+    if (state.hero.hp === 0) outcome = 'lost';
   }
   if (!outcome) {
     regenerate(state.hero);

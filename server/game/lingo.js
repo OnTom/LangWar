@@ -173,7 +173,7 @@ function publicTask(row) {
     from: type.from,
     to: type.to,
     options: data.options ? data.options.map((o) => o.text) : null,
-    timeLimit: type.timeLimit,
+    timeLimit: data.timeLimit ?? type.timeLimit,
     expiresAt: row.expires_at,
     serverNow: Date.now(),
   };
@@ -184,7 +184,7 @@ function publicTask(row) {
  * type – choice | translate | reverse, topics – z jakých témat brát slova,
  * context – k čemu úkol patří (např. 'practice' nebo 'battle:12')
  */
-export function createTask(characterId, { type, topics = null, context = 'practice' }) {
+export function createTask(characterId, { type, topics = null, context = 'practice', timeScale = 1 }) {
   if (!Object.hasOwn(TASK_TYPES, type)) throw new Error(`Neznámý typ úkolu: ${type}`);
   const now = Date.now();
   db.prepare('DELETE FROM lingo_tasks WHERE created_at < ?').run(now - TASK_TTL_MS);
@@ -195,14 +195,16 @@ export function createTask(characterId, { type, topics = null, context = 'practi
   );
 
   const word = pickWord(characterId, topics);
-  const data = { prompt: TASK_TYPES[type].from === 'de' ? word.de : word.display };
+  // timeScale < 1 = méně času (zmatení v souboji)
+  const timeLimit = Math.max(4, Math.round(TASK_TYPES[type].timeLimit * timeScale));
+  const data = { prompt: TASK_TYPES[type].from === 'de' ? word.de : word.display, timeLimit };
   if (isChoice(type)) data.options = choiceOptions(word, type === 'choice_reverse');
 
   const id = crypto.randomBytes(12).toString('hex');
   db.prepare(
     `INSERT INTO lingo_tasks (id, character_id, word_id, type, context, data, created_at, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, characterId, word.id, type, context, JSON.stringify(data), now, now + TASK_TYPES[type].timeLimit * 1000);
+  ).run(id, characterId, word.id, type, context, JSON.stringify(data), now, now + timeLimit * 1000);
 
   return publicTask(db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(id));
 }

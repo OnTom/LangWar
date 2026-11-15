@@ -107,8 +107,13 @@ a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 
 ## Nepřátelé a aréna
 
-- Nepřátelé na mapě kouzlí podle svého povolání, stupně kouzel podle úrovně;
-  počítač léčí při nízkých životech, jinak útočí; kouzla jim vyjdou v 75 % případů.
+- Nepřátelé na mapě kouzlí podle svého povolání, stupně kouzel podle úrovně (stejně jako by je měl hráč):
+  monstrum umí 2 kouzla, boss a gladiátor 3 (přednost má útok a léčení); kouzla jim vyjdou v 75 % případů.
+- Počítač léčí při méně než 40 % životů, jinak občas útočí kouzlem, staví štít, posiluje se nebo hrdinu zmate.
+- **Kontrola nepřítele hrdinu nezastaví** (hráč by ztratil tah), ale **zmate**: příští úkol má jen 60 % času;
+  stupeň II a III přidá poškození. Štít nepřítele pohlcuje zásahy hrdiny, jed lovce působí i na hrdinu.
+- Kouzla nepřátel bijí začínající hrdiny (1.–4. úroveň) slaběji, stejně jako jejich útoky.
+- Boss má kvůli léčení a štítům jen 1,3× víc životů (dřív 1,5×).
 - V aréně soupeř používá kouzla, která se skutečný hráč naučil a nasadil.
   Později přibudou souboje hráčů naživo.
 
@@ -123,7 +128,7 @@ a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 2. ✅ Gramatický engine: učební plán po jazycích, generátory cvičení (zatím lekce 1–5), kontrola, sledování chyb
 3. ✅ Knihovna: lekce, nákup za zlato, zkouška, kniha kouzel se 4 sloty
 4. ✅ Kouzla v boji: účinky, mana, selhání
-5. Kouzlící nepřátelé a aréna
+5. ✅ Kouzlící nepřátelé a aréna
 6. Obsah prvních 5 lekcí, testy, vyvážení
 
 Administrace (menu 🛠️ Admin) umí naučit lekci bez zkoušky, naučit všechny hotové lekce a vše zapomenout.

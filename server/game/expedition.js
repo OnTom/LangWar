@@ -10,13 +10,16 @@ import {
   BOSS_LEVEL_BONUS,
   BOSS_REWARD,
   BOSS_RARITY_BOOST,
+  MONSTER_SPELLS,
+  BOSS_SPELLS,
+  DAZE_TIME_FACTOR,
   CLASSES,
   battleReward,
 } from './rules.js';
 import { TASK_TYPES, TOPICS, TaskError, createTask, answerTask, openTask } from './lingo.js';
 import { createBattle, actionError, payForAction, playRound, spellOf } from './battle.js';
 import { createGrammarTask, answerGrammarTask, openGrammarTask } from './grammar.js';
-import { battleSpells } from './library.js';
+import { battleSpells, npcSpells } from './library.js';
 import { createMonster } from './monsters.js';
 import { findCharacter, characterCombatProfile, addXp, today } from './character.js';
 import { generateItem, itemView } from './items.js';
@@ -70,7 +73,7 @@ function save(row, state, fields = {}) {
 
 const PUBLIC_FIGHTER = [
   'name', 'avatar', 'class', 'level', 'hp', 'maxHp', 'mana', 'maxMana', 'boss',
-  'shield', 'empower', 'stunned', 'poison', // stavy z kouzel
+  'shield', 'empower', 'stunned', 'dazed', 'poison', // stavy z kouzel
 ];
 
 const isSpell = (action) => Boolean(action?.startsWith('spell:'));
@@ -118,6 +121,7 @@ export function battleView(row) {
       lessonName: sp.lessonName,
       available: state.hero.mana >= sp.mana,
     })),
+    enemySpells: (state.enemy.spells ?? []).map((sp) => ({ name: sp.name, icon: sp.icon, rankName: sp.rankName, effect: sp.effect })),
     pendingAction: row.pending_action,
     task: pending && !pending.expired ? pending.task : null,
     log: state.log,
@@ -209,7 +213,8 @@ export function startBattle(c, { location: key, enemy } = {}) {
     db.prepare('UPDATE characters SET map_location = ? WHERE id = ?').run(location.key, c.id);
     const level = enemyLevel(c, location) + (boss ? BOSS_LEVEL_BONUS : 0);
     const monster = createMonster({ name: template.name, icon: template.icon, cls: template.cls, level });
-    const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, monster, { boss });
+    const enemySpells = npcSpells(template.cls, level, boss ? BOSS_SPELLS : MONSTER_SPELLS);
+    const state = createBattle({ ...characterCombatProfile(c), name: c.name, avatar: c.avatar }, monster, { boss, enemySpells });
     state.location = { key: location.key, name: location.name, icon: location.icon };
     state.spells = battleSpells(c);
     state.enemyIndex = boss ? 'boss' : location.monsters.indexOf(template);
@@ -232,17 +237,20 @@ export function chooseAction(c, action) {
   const state = JSON.parse(row.state);
   const error = actionError(state, action);
   if (error) throw new BattleError(error);
+  // Zmatený hrdina (kouzlo nepřítele) má na tenhle úkol méně času
+  const timeScale = state.hero.dazed ? DAZE_TIME_FACTOR : 1;
+  state.hero.dazed = false;
   const spell = spellOf(state, action);
   if (spell) {
     // Kouzlo: mana se platí hned, cvičení je z gramatiky kouzla
     payForAction(state, action);
-    const task = createGrammarTask(c.id, { lesson: spell.lesson, topics: state.topics, context: `battle:${row.id}` });
+    const task = createGrammarTask(c.id, { lesson: spell.lesson, topics: state.topics, context: `battle:${row.id}`, timeScale });
     return save(row, state, { pending_action: action, task_id: task.id });
   }
   // Směr překladu se střídá náhodně (do češtiny i do cizího jazyka)
   const types = BATTLE_ACTIONS[action].tasks;
   const type = types[Math.floor(Math.random() * types.length)];
-  const task = createTask(c.id, { type, topics: state.topics, context: `battle:${row.id}` });
+  const task = createTask(c.id, { type, topics: state.topics, context: `battle:${row.id}`, timeScale });
   return save(row, state, { pending_action: action, task_id: task.id });
 }
 

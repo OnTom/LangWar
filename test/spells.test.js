@@ -162,3 +162,99 @@ test('zakázka na kouzla: jen pro toho, kdo kouzlí, a plní se úspěšným kou
   assert.equal(bounty.progress, 1);
   assert.match(bounty.text, /kouzla/);
 });
+
+// --- Kouzla nepřátel ------------------------------------------------------------
+
+import { npcSpells } from '../server/game/library.js';
+
+function enemyBattle(enemySpells) {
+  const s = battle('warrior', []);
+  s.enemy.spells = enemySpells.map(([kind, rank]) => ({ key: `spell:${kind}`, ...spellInfo('scout', kind, rank) }));
+  s.enemy.class = 'scout';
+  s.enemy.mana = s.enemy.maxMana = 1000;
+  return s;
+}
+
+test('nepřátelé dostávají kouzla podle úrovně jako hráči', () => {
+  assert.deepEqual(npcSpells('mage', 1, 4), []);
+  assert.deepEqual(npcSpells('mage', 2, 4).map((s) => `${s.kind}${s.rank}`), ['attack1']);
+  const l9 = npcSpells('warrior', 9, 4);
+  assert.equal(l9.length, 4);
+  assert.equal(l9.find((s) => s.kind === 'attack').rank, 2, 'na 9. úrovni Útok II');
+  assert.equal(npcSpells('scout', 30, 2).length, 2);
+  assert.ok(npcSpells('scout', 30, 2).every((s) => ['attack', 'heal'].includes(s.kind)), 'přednost má útok a léčení');
+});
+
+test('nepřítel se při nízkých životech léčí a kouzla mu občas selžou', () => {
+  let healed = 0;
+  let fizzled = 0;
+  for (let i = 0; i < 200; i++) {
+    const s = enemyBattle([['heal', 1]]);
+    s.enemy.hp = 100;
+    const { events } = playRound(s, 'heavy', { correct: false });
+    const e = events.find((x) => x.actor === 'enemy');
+    if (e.type === 'spell' && e.effect === 'heal') healed++;
+    if (e.type === 'fizzle') fizzled++;
+  }
+  assert.ok(healed > 80, `léčil se ${healed}×`);
+  assert.ok(fizzled > 10, `selhalo ${fizzled}×`);
+});
+
+test('štít nepřítele pohltí zásah hrdiny, jed nepřítele pálí hrdinu', () => {
+  const s = enemyBattle([]);
+  s.enemy.shield = 1000;
+  s.enemy.armorReduction = 0;
+  const { events } = playRound(s, 'heavy', { correct: true });
+  assert.equal(events[0].damage, 0);
+  assert.ok(events[0].absorbed > 0);
+  assert.equal(s.enemy.hp, 1000);
+
+  const p = enemyBattle([]);
+  p.hero.poison = { perTurn: 7, turns: 2 };
+  const round = playRound(p, 'heavy', { correct: false });
+  const tick = round.events.find((e) => e.type === 'poison' && e.actor === 'enemy');
+  assert.equal(tick.damage, 7);
+  assert.equal(p.hero.poison.turns, 1);
+});
+
+test('kontrola nepřítele hrdinu zmate: příští úkol má méně času', async () => {
+  const s = enemyBattle([['control', 2]]);
+  let dazed = false;
+  for (let i = 0; i < 100 && !dazed; i++) {
+    s.hero.dazed = false;
+    const { events } = playRound(s, 'heavy', { correct: false });
+    dazed = events.some((e) => e.actor === 'enemy' && e.effect === 'daze');
+  }
+  assert.ok(dazed && s.hero.dazed);
+
+  const token = await api.player('Zmateny', 'warrior');
+  const id = db.prepare("SELECT c.id FROM characters c JOIN users u ON u.id = c.user_id WHERE u.username = 'Zmateny'").get().id;
+  await api.post(token, '/battle/start', { location: 'chalupa' });
+  db.prepare("UPDATE battles SET state = json_set(state, '$.hero.dazed', json('true')) WHERE character_id = ? AND status = 'active'").run(id);
+  const chosen = await api.post(token, '/battle/action', { action: 'light' });
+  assert.equal(chosen.body.battle.task.timeLimit, 6, '10 s × 0,6');
+  assert.equal(chosen.body.battle.hero.dazed, false, 'zmatení platí jen na jeden úkol');
+});
+
+test('monstrum na mapě a soupeř v aréně kouzlí', async () => {
+  const token = await api.player('Vyzyvatel', 'mage');
+  const id = db.prepare("SELECT c.id FROM characters c JOIN users u ON u.id = c.user_id WHERE u.username = 'Vyzyvatel'").get().id;
+  db.prepare('UPDATE characters SET level = 9 WHERE id = ?').run(id);
+  const start = await api.post(token, '/battle/start', { location: 'chalupa' });
+  assert.equal(start.body.battle.enemySpells.length, 2);
+  await api.post(token, '/battle/flee');
+
+  // Soupeř v aréně = skutečný hráč s naučeným kouzlem
+  const rival = await api.player('Soupeř', 'scout');
+  const rivalId = db.prepare("SELECT c.id FROM characters c JOIN users u ON u.id = c.user_id WHERE u.username = 'Soupeř'").get().id;
+  db.prepare("INSERT INTO character_lessons (character_id, lesson, bought_at, learned_at) VALUES (?, 'artikel', 1, 1)").run(rivalId);
+  db.prepare(`UPDATE characters SET spell_slots = '["attack"]' WHERE id = ?`).run(rivalId);
+  assert.ok(rival);
+  db.prepare('UPDATE characters SET arena_opponents = ? WHERE id = ?').run(
+    JSON.stringify([{ type: 'player', id: rivalId }, { type: 'npc', index: 0 }, { type: 'npc', index: 1 }]),
+    id
+  );
+  const fight = await api.post(token, '/arena/fight', { index: 0 });
+  assert.equal(fight.status, 201, JSON.stringify(fight.body));
+  assert.deepEqual(fight.body.battle.enemySpells.map((s) => s.name), ['Otrávený šíp']);
+});

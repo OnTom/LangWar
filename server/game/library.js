@@ -81,6 +81,24 @@ export function battleSpells(c) {
   });
 }
 
+/**
+ * Kouzla počítačem řízeného nepřítele: stupně podle úrovně jako u hráčů (podle učebního plánu),
+ * vybere se `count` náhodných druhů (léčení a útok mají přednost).
+ */
+export function npcSpells(cls, level, count) {
+  const ranks = {};
+  for (const lesson of LESSONS) {
+    if (lesson.level > level) continue;
+    const { kind, rank } = lesson.spell;
+    ranks[kind] = Math.max(ranks[kind] ?? 0, rank);
+  }
+  const kinds = Object.keys(ranks).sort((a, b) => {
+    const priority = (k) => (k === 'attack' || k === 'heal' ? 0 : 1) + Math.random();
+    return priority(a) - priority(b);
+  });
+  return kinds.slice(0, count).map((kind) => ({ key: `spell:${kind}`, ...spellInfo(cls, kind, ranks[kind]) }));
+}
+
 function saveSlots(characterId, slots) {
   db.prepare('UPDATE characters SET spell_slots = ? WHERE id = ?').run(JSON.stringify(slots), characterId);
 }
