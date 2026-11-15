@@ -108,7 +108,7 @@ a těžký útok ~16 / ~30 / ~45 na 1. / 15. / 30. úrovni.
 ## Postup
 
 1. ✅ Nové měřítko soubojů, útoky oběma směry, velká písmena
-2. Gramatický engine: učební plán po jazycích, generátory cvičení, kontrola, sledování chyb
+2. ✅ Gramatický engine: učební plán po jazycích, generátory cvičení (zatím lekce 1–5), kontrola, sledování chyb
 3. Knihovna: lekce, nákup za zlato, zkouška, kniha kouzel se 4 sloty
 4. Kouzla v boji: účinky, mana, selhání
 5. Kouzlící nepřátelé a aréna

@@ -16,6 +16,7 @@ import chatRoutes from './routes/chat.js';
 import lingoRoutes from './routes/lingo.js';
 import battleRoutes from './routes/battle.js';
 import adminRoutes from './routes/admin.js';
+import grammarRoutes from './routes/grammar.js';
 import db from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +53,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/lingo', lingoRoutes);
 app.use('/api/battle', battleRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/grammar', grammarRoutes);
 
 // Neznámé API cesty
 app.use('/api', (req, res) => {

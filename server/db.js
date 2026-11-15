@@ -172,6 +172,17 @@ db.exec(`
     PRIMARY KEY (character_id, word_id)
   );
 
+  -- Jak hráčům jde gramatika (lekce a konkrétní položka, např. slovo nebo tvar slovesa)
+  CREATE TABLE IF NOT EXISTS grammar_stats (
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    lesson       TEXT    NOT NULL,
+    item         TEXT    NOT NULL,
+    correct      INTEGER NOT NULL DEFAULT 0,
+    wrong        INTEGER NOT NULL DEFAULT 0,
+    last_seen    INTEGER NOT NULL,
+    PRIMARY KEY (character_id, lesson, item)
+  );
+
   -- Tahové souboje řízené hráčem. state = JSON se stavem obou bojovníků a záznamem.
   CREATE TABLE IF NOT EXISTS battles (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -223,6 +223,7 @@ export function openTask(characterId, taskId) {
 export function taskSolution(taskId) {
   const row = db.prepare('SELECT * FROM lingo_tasks WHERE id = ?').get(String(taskId));
   if (!row) return null;
+  if (row.type.startsWith('g_')) return JSON.parse(row.data).adminSolution; // gramatika (grammar.js)
   const word = getWord(row.word_id);
   const data = JSON.parse(row.data);
   if (isChoice(row.type)) {
@@ -254,6 +255,7 @@ export function answerTask(characterId, taskId, answer, { context = null } = {})
   if (!row) throw new TaskError('Takový úkol neexistuje nebo už vypršel.');
   // Úkol jiného druhu (např. ze souboje) se tady nesmí ani „spotřebovat“
   if (context && row.context !== context) throw new TaskError('Tenhle úkol patří k souboji.');
+  if (row.type.startsWith('g_')) throw new TaskError('Gramatické cvičení se vyhodnocuje jinde.');
 
   const now = Date.now();
   const claimed = db

@@ -14,8 +14,18 @@ export function renderTask(el, task, { onAnswer }) {
   const total = task.timeLimit * 1000;
   let done = false;
 
-  const answerArea =
-    task.options
+  const answerArea = task.tiles
+    ? `<div class="task-order">
+        <div class="order-built" aria-live="polite"><span class="order-placeholder">Klikej na slova ve správném pořadí</span></div>
+        <div class="order-pool">
+          ${task.tiles.map((t, i) => `<button type="button" class="btn btn-small order-tile" data-tile="${i}">${escapeHtml(t)}</button>`).join('')}
+        </div>
+        <div class="order-actions">
+          <button type="button" class="btn btn-small order-submit" disabled>Odpovědět</button>
+          <button type="button" class="link-inline order-reset">Začít znovu</button>
+        </div>
+      </div>`
+    : task.options
       ? `<div class="task-options">
           ${task.options
             .map((o, i) => `<button type="button" class="btn task-option" data-index="${i}">${escapeHtml(o)}</button>`)
@@ -34,8 +44,13 @@ export function renderTask(el, task, { onAnswer }) {
 
   el.innerHTML = `
     <div class="task">
-      <div class="task-type">${escapeHtml(task.typeName)} ${FLAGS[task.from]} → ${FLAGS[task.to]}</div>
-      <div class="task-prompt">${escapeHtml(task.prompt)}</div>
+      <div class="task-type">${
+        task.grammar
+          ? `📖 ${escapeHtml(task.lessonName)}: ${escapeHtml(task.typeName)} ${FLAGS.de}`
+          : `${escapeHtml(task.typeName)} ${FLAGS[task.from]} → ${FLAGS[task.to]}`
+      }</div>
+      <div class="task-prompt ${task.grammar ? 'task-sentence' : ''}">${escapeHtml(task.prompt)}</div>
+      ${task.hint ? `<div class="task-hint">${escapeHtml(task.hint)}</div>` : ''}
       <div class="bar task-timer"><div class="bar-fill" style="width: 100%"></div><span></span></div>
       ${task.adminSolution ? `<div class="task-admin">🛠️ Odpověď: <strong>${escapeHtml(task.adminSolution)}</strong></div>` : ''}
       ${answerArea}
@@ -61,6 +76,40 @@ export function renderTask(el, task, { onAnswer }) {
   }
 
   el.querySelectorAll('.task-option').forEach((b) => b.addEventListener('click', () => finish(Number(b.dataset.index))));
+
+  // Skládání věty: kliknutá slova se řadí za sebe, kliknutím na složené slovo se vrátí zpět
+  if (task.tiles) {
+    const order = [];
+    const built = el.querySelector('.order-built');
+    const submit = el.querySelector('.order-submit');
+    const renderOrder = () => {
+      built.innerHTML = order.length
+        ? order.map((i, pos) => `<button type="button" class="btn btn-small order-placed" data-pos="${pos}">${escapeHtml(task.tiles[i])}</button>`).join('')
+        : '<span class="order-placeholder">Klikej na slova ve správném pořadí</span>';
+      el.querySelectorAll('.order-tile').forEach((b) => (b.hidden = order.includes(Number(b.dataset.tile))));
+      submit.disabled = order.length !== task.tiles.length;
+      built.querySelectorAll('.order-placed').forEach((b) =>
+        b.addEventListener('click', () => {
+          if (done) return;
+          order.splice(Number(b.dataset.pos), 1);
+          renderOrder();
+        })
+      );
+    };
+    el.querySelectorAll('.order-tile').forEach((b) =>
+      b.addEventListener('click', () => {
+        if (done) return;
+        order.push(Number(b.dataset.tile));
+        renderOrder();
+      })
+    );
+    el.querySelector('.order-reset').addEventListener('click', () => {
+      if (done) return;
+      order.length = 0;
+      renderOrder();
+    });
+    submit.addEventListener('click', () => finish([...order]));
+  }
 
   const form = el.querySelector('.task-form');
   if (form) {
@@ -97,8 +146,16 @@ export function renderTask(el, task, { onAnswer }) {
   };
 }
 
-// Výsledek odpovědi (správně / špatně + správný překlad)
+// Výsledek odpovědi (správně / špatně + správný překlad, u gramatiky i pravidlo)
 export function resultHtml(result) {
+  if (result.grammar) {
+    if (result.correct) return `<div class="task-result ok">✅ Správně! <strong>${escapeHtml(result.expected)}</strong></div>`;
+    return `
+      <div class="task-result bad">
+        ${result.timedOut ? '⏰ Čas vypršel.' : '❌ Špatně.'} Správně: <strong>${escapeHtml(result.expected)}</strong>
+        <div class="task-rule">💡 ${escapeHtml(result.rule)}</div>
+      </div>`;
+  }
   if (result.correct) {
     return `<div class="task-result ok">✅ Správně! <strong>${escapeHtml(result.word.de)}</strong> = ${escapeHtml(result.word.cz)}</div>`;
   }

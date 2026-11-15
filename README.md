@@ -122,6 +122,9 @@ Ve Windows PowerShellu `npm.cmd run admin -- Tomas`. Na serveru jde místo toho 
 | GET    | `/api/lingo/words?topic=…` | Slova tématu se statistikou |
 | POST   | `/api/lingo/task`    | Nový úkol na procvičení `{type, topic?}` |
 | POST   | `/api/lingo/answer`  | Odpověď na úkol `{taskId, answer}` |
+| GET    | `/api/grammar`       | Lekce gramatiky a postup (zatím jen správce) |
+| POST   | `/api/grammar/task`  | Gramatické cvičení `{lesson, format?}` |
+| POST   | `/api/grammar/answer` | Odpověď `{taskId, answer}` – index, text, nebo pořadí kartiček |
 | GET    | `/api/battle`        | Probíhající tahový souboj (nebo `null`) a energie |
 | GET    | `/api/battle/map`    | Mapa Výpravy: lokace, odemčení, nepřátelé, postup a boss |
 | POST   | `/api/battle/start`  | Začít souboj (stojí 1 energii) `{location, enemy?}` – `enemy` = pořadí nepřítele, `'boss'` nebo nic (náhodný) |
@@ -230,6 +233,20 @@ Krčma slouží jen k vydávání úkolů, bojuje se na Výpravě (`server/game/
   a smí začínat velkým písmenem jako na začátku věty („Der Hund“)
 - Správnou odpověď zná jen server; každý úkol jde zodpovědět jednou a po vypršení času se nepočítá
 - Hra si pamatuje úspěšnost u každého slova a chybná slova dává častěji
+
+### Gramatika (připravuje se pro kouzla)
+
+Návrh kouzel a učebního plánu je v [docs/kouzla.md](docs/kouzla.md).
+
+- Učební plán němčiny (15 lekcí) a data pro cvičení: `server/data/grammar/de.js`
+  (pořadí lekcí, kouzlo, které lekce odemyká, množná čísla podstatných jmen, pravidelná slovesa)
+- Generátory cvičení: `server/game/grammar/de.js`; zatím mají cvičení první lekce:
+  člen der/die/das, přítomný čas, zápor nicht/kein, akuzativ, množné číslo
+- Formáty: **výběr z možností** (15 s), **doplnění** (25 s), **skládání věty z kartiček** (30 s)
+- Cvičení se skládají ze slovíček hry; velikost písmen, diakritika i přehlásky musí sedět
+- Po chybě hráč uvidí správnou větu a krátké pravidlo; chybné položky se opakují častěji (`grammar_stats`)
+- Engine (`server/game/grammar.js`) je společný pro všechny jazyky – nový jazyk = vlastní data a generátory
+- Zatím jen náhled pro správce ve Slovníčku; hráčům gramatiku otevře knihovna
 
 ### Cechy
 

@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { getCharacter } from '../state.js';
 import { escapeHtml } from '../format.js';
 import { renderTask, resultHtml } from '../lingo.js';
 
@@ -7,7 +8,10 @@ const FLAGS = { de: '🇩🇪', cz: '🇨🇿' };
 // Slovníček: témata, pokrok a procvičování slovíček (bez odměn)
 export default function slovnicek(el) {
   let overview = null;
-  let mode = 'topics'; // topics | practice | words
+  let grammar = null; // lekce gramatiky – zatím jen náhled pro správce
+  let grammarLesson = null;
+  let grammarFormat = ''; // '' = náhodně
+  let mode = 'topics'; // topics | practice | words | grammar
   let topic = null;
   let taskType = 'choice';
   let score = { correct: 0, total: 0 };
@@ -49,7 +53,17 @@ export default function slovnicek(el) {
             )
             .join('')}
         </div>
+        ${grammar ? grammarListHtml() : ''}
       </div>`;
+    el.querySelectorAll('[data-grammar]').forEach((b) =>
+      b.addEventListener('click', () => {
+        grammarLesson = b.dataset.grammar;
+        grammarFormat = '';
+        score = { correct: 0, total: 0 };
+        mode = 'grammar';
+        render();
+      })
+    );
     el.querySelectorAll('[data-practice]').forEach((b) =>
       b.addEventListener('click', () => {
         topic = b.dataset.practice;
@@ -65,6 +79,84 @@ export default function slovnicek(el) {
         render();
       })
     );
+  }
+
+  const SPELL_NAMES = { attack: 'Útok', heal: 'Léčení', defense: 'Obrana', control: 'Kontrola', buff: 'Posílení' };
+  const RANKS = ['', 'I', 'II', 'III'];
+
+  function grammarListHtml() {
+    return `
+      <h3 class="section-title">📖 Gramatika <small>(náhled pro správce – hráčům ji otevře knihovna)</small></h3>
+      <div class="topic-list">
+        ${grammar
+          .map(
+            (l) => `
+          <div class="topic-card ${l.ready ? '' : 'not-ready'}">
+            <div class="topic-head"><span class="topic-icon">${l.order}.</span><strong>${escapeHtml(l.name)}</strong><small>úr. ${l.level}</small></div>
+            <small>✨ ${SPELL_NAMES[l.spell.kind]} ${RANKS[l.spell.rank]}${l.correct + l.wrong ? ` · ✔ ${l.correct} ✖ ${l.wrong}` : ''}</small>
+            <div class="topic-actions">
+              ${l.ready ? `<button type="button" class="btn btn-small" data-grammar="${l.key}">Procvičit</button>` : '<small class="hint">připravuje se</small>'}
+            </div>
+          </div>`
+          )
+          .join('')}
+      </div>`;
+  }
+
+  function renderGrammar() {
+    const lesson = grammar.find((l) => l.key === grammarLesson);
+    el.innerHTML = `
+      <div class="panel lingo">
+        <button type="button" class="link-inline back-btn">← Zpět na přehled</button>
+        <h2>📖 ${escapeHtml(lesson.name)}: procvičování</h2>
+        <div class="tabs task-types">
+          ${[{ key: '', name: 'Náhodně' }, ...lesson.formats]
+            .map((f) => `<button type="button" data-format="${f.key}" class="${f.key === grammarFormat ? 'active' : ''}">${escapeHtml(f.name)}</button>`)
+            .join('')}
+        </div>
+        <div class="practice-score">Správně: <strong>${score.correct}</strong> z ${score.total}</div>
+        <div class="task-area"></div>
+        <div class="task-feedback"></div>
+        <p class="error" role="alert"></p>
+      </div>`;
+    el.querySelector('.back-btn').addEventListener('click', backToTopics);
+    el.querySelectorAll('[data-format]').forEach((b) =>
+      b.addEventListener('click', () => {
+        grammarFormat = b.dataset.format;
+        el.querySelectorAll('[data-format]').forEach((x) => x.classList.toggle('active', x === b));
+        nextGrammarTask();
+      })
+    );
+    nextGrammarTask();
+  }
+
+  async function nextGrammarTask() {
+    stop();
+    const area = el.querySelector('.task-area');
+    const feedback = el.querySelector('.task-feedback');
+    feedback.innerHTML = '';
+    try {
+      const { task } = await api('/grammar/task', { method: 'POST', body: { lesson: grammarLesson, format: grammarFormat || undefined } });
+      if (mode !== 'grammar') return;
+      stopTask = renderTask(area, task, {
+        onAnswer: async (answer) => {
+          try {
+            const { result } = await api('/grammar/answer', { method: 'POST', body: { taskId: task.id, answer } });
+            score.total++;
+            if (result.correct) score.correct++;
+            el.querySelector('.practice-score').innerHTML = `Správně: <strong>${score.correct}</strong> z ${score.total}`;
+            feedback.innerHTML = `${resultHtml(result)}<button type="button" class="btn btn-small next-btn">Další cvičení ↵</button>`;
+            const next = feedback.querySelector('.next-btn');
+            next.addEventListener('click', nextGrammarTask);
+            next.focus();
+          } catch (err) {
+            el.querySelector('.error').textContent = err.message;
+          }
+        },
+      });
+    } catch (err) {
+      el.querySelector('.error').textContent = err.message;
+    }
   }
 
   async function renderWords() {
@@ -175,6 +267,7 @@ export default function slovnicek(el) {
       return;
     }
     if (mode === 'practice') return renderPractice();
+    if (mode === 'grammar') return renderGrammar();
     if (mode === 'words') return renderWords();
     renderTopics();
   }
@@ -182,6 +275,7 @@ export default function slovnicek(el) {
   async function load() {
     try {
       overview = await api('/lingo');
+      if (getCharacter()?.isAdmin) grammar = (await api('/grammar')).lessons;
     } catch (err) {
       errorText = err.message;
     }
