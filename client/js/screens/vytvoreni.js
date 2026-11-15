@@ -6,7 +6,8 @@ export default async function vytvoreni(el, { onCreated }) {
   el.innerHTML = '<div class="panel">Načítám šatník…</div>';
   const { classes, avatars, attributes } = await api('/character/options');
 
-  let selectedClass = Object.keys(classes)[0];
+  // Vybrat jde jen povolání, která jsou zapnutá (ostatní „připravujeme“)
+  let selectedClass = Object.keys(classes).find((key) => classes[key].enabled) ?? Object.keys(classes)[0];
   let selectedAvatar = avatars[0];
 
   el.innerHTML = `
@@ -19,11 +20,11 @@ export default async function vytvoreni(el, { onCreated }) {
         ${Object.entries(classes)
           .map(
             ([key, c]) => `
-          <button type="button" class="choice class-card" data-class="${key}">
+          <button type="button" class="choice class-card ${c.enabled ? '' : 'disabled'}" data-class="${key}" ${c.enabled ? '' : 'disabled'}>
             <span class="class-icon">${c.icon}</span>
             <strong>${c.name}</strong>
             <small>${c.description}</small>
-            <span class="main-attr">Hlavní atribut: ${attributes[c.mainAttribute].name}</span>
+            <span class="main-attr">${c.enabled ? `Hlavní atribut: ${attributes[c.mainAttribute].name}` : '🔒 Připravujeme'}</span>
           </button>`
           )
           .join('')}

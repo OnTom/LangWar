@@ -198,6 +198,8 @@ h3 {
 
 .choice:hover { border-color: #b89d6c; }
 .choice.selected { border-color: var(--accent); background: #fff1dc; }
+.class-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.6); }
+.class-card.disabled:hover { border-color: var(--panel-dark); }
 
 .class-list {
   display: grid;

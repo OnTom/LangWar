@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { ENABLED_CLASSES } from '../config.js';
 import { ATTRIBUTES, ATTRIBUTE_KEYS, CLASSES, AVATARS, STARTING_GOLD, upgradeCost } from '../game/rules.js';
 import { findCharacter, toView } from '../game/character.js';
 import { giveStarterGear } from '../game/inventory.js';
@@ -14,7 +15,14 @@ router.get('/options', (req, res) => {
   const classes = Object.fromEntries(
     Object.entries(CLASSES).map(([key, c]) => [
       key,
-      { name: c.name, icon: c.icon, description: c.description, mainAttribute: c.mainAttribute, base: c.base },
+      {
+        name: c.name,
+        icon: c.icon,
+        description: c.description,
+        mainAttribute: c.mainAttribute,
+        base: c.base,
+        enabled: ENABLED_CLASSES.includes(key),
+      },
     ])
   );
   res.json({ classes, avatars: AVATARS, attributes: ATTRIBUTES });
@@ -31,6 +39,9 @@ router.post('/', (req, res) => {
   const { class: cls, avatar } = req.body || {};
   if (!Object.hasOwn(CLASSES, cls)) {
     return res.status(400).json({ error: 'Taková třída neexistuje. Ani v pohádkách.' });
+  }
+  if (!ENABLED_CLASSES.includes(cls)) {
+    return res.status(400).json({ error: 'Tohle povolání zatím připravujeme. Vyber si jiné.' });
   }
   if (!AVATARS.includes(avatar)) {
     return res.status(400).json({ error: 'Tenhle obličej nemáme na skladě.' });

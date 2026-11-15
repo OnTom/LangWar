@@ -18,6 +18,13 @@ export const QUEST_TIME_SCALE = Number(process.env.QUEST_TIME_SCALE) || 1;
 // požadavků viděly skutečnou IP hráče. 0 = přímo bez proxy.
 export const TRUST_PROXY = Number(process.env.TRUST_PROXY) || 0;
 
+// Povolání, která si hráči můžou zvolit při zakládání postavy (ostatní jsou „připravujeme“).
+// Např. ENABLED_CLASSES=mage,warrior,scout zapne všechna.
+export const ENABLED_CLASSES = (process.env.ENABLED_CLASSES || 'mage')
+  .split(',')
+  .map((c) => c.trim())
+  .filter(Boolean);
+
 // Jména účtů s přístupem do administrace (oddělená čárkou), např. ADMIN_USERS=Tomas,Petra.
 // Admina jde nastavit i příkazem npm run admin -- <jméno> (uloží se do databáze).
 export const ADMIN_USERS = (process.env.ADMIN_USERS || '')

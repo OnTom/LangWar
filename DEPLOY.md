@@ -151,6 +151,7 @@ po pádu serveru, takže nic nemaž ručně.
 |--------------------|---------------------|-------|
 | `JWT_SECRET`       | –                   | **Povinné.** Tajný klíč, aspoň 32 znaků |
 | `ADMIN_USERS`      | –                   | Jména účtů se správou hry, oddělená čárkou (menu 🛠️ Admin) |
+| `ENABLED_CLASSES`  | `mage`              | Povolání, která si hráči můžou zvolit, např. `mage,warrior,scout` |
 | `TRUST_PROXY`      | `0` (v compose `1`) | Počet proxy před hrou; za Caddy/Railway `1`, aby limity viděly skutečnou IP hráčů |
 | `TIMEZONE`         | `Europe/Prague`     | Kdy je „půlnoc“ pro žízeň, obchody a denní úkoly |
 | `DB_FILE`          | `/data/langwar.db`  | Cesta k databázi |

@@ -6,6 +6,8 @@ import path from 'node:path';
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET ??= 'testovaci-tajemstvi-jen-pro-automaticke-testy';
+// Testy hrají za všechna povolání (ve hře je teď zapnutý jen mág)
+process.env.ENABLED_CLASSES ??= 'warrior,mage,scout';
 const dbFile = path.join(os.tmpdir(), `langwar-test-${process.pid}-${Date.now()}.db`);
 process.env.DB_FILE = dbFile;
 

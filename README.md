@@ -39,6 +39,7 @@ obnova: `npm run restore -- backups/soubor.db` (při vypnutém serveru).
 | `JWT_SECRET` | vývojový řetězec | Tajný klíč pro tokeny – **v produkci povinný, aspoň 32 znaků** |
 | `TRUST_PROXY` | `0`             | Počet proxy před serverem (např. `1` za nginx/hostingem), aby limity viděly skutečnou IP |
 | `ADMIN_USERS` | –               | Jména účtů se správou hry, oddělená čárkou (např. `Tomas,Petra`) |
+| `ENABLED_CLASSES` | `mage`      | Povolání, která si jde zvolit (ostatní „připravujeme“), např. `mage,warrior,scout` |
 | `TIMEZONE`   | `Europe/Prague`  | Časové pásmo pro půlnoční doplnění energie a denní úkoly |
 | `QUEST_TIME_SCALE` | `1`        | Zrychlení času pro vývoj – čekání v aréně (`0.05` = 5 % normální doby) |
 
